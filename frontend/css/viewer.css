@@ -113,7 +113,7 @@ body.in-hifz .topbar { display: none; } /* the reading page has its own bar */
 .fab svg { width: 22px; height: 22px; }
 .fab:hover { background: color-mix(in srgb, var(--gold) 28%, var(--gold-soft)); }
 
-/* ── bottom dock: sheet handle, page strip, player ──── */
+/* ── bottom dock: sheet handle, page buttons, player ── */
 .dock {
   position: fixed; inset-inline: 0; bottom: 0; z-index: 20;
   background: var(--surface-100); border-top: 1px solid var(--line);
@@ -126,27 +126,24 @@ body.in-hifz .topbar { display: none; } /* the reading page has its own bar */
 .peek__grip, .sheet__grip { width: 36px; height: 4px; border-radius: var(--radius-pill); background: var(--line-strong); flex: none; }
 .peek:hover { color: var(--ink); }
 
-.strip {
-  display: flex; gap: 6px; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none;
-  padding: 2px var(--space-4) var(--space-2);
-}
-.strip::-webkit-scrollbar { display: none; }
-.thumb, .gtile {
-  position: relative; flex: none; display: grid; place-items: center; scroll-snap-align: center;
+.pager-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: 0 var(--space-3) var(--space-2); }
+.pg-btn { height: 40px; padding: 0 var(--space-3); gap: var(--space-1); border-radius: var(--radius-pill); }
+.pg-btn svg { width: 20px; height: 20px; }
+.pg-btn:disabled { opacity: .4; cursor: default; }
+.pg-label { font-size: 13.5px; font-weight: 500; }
+.viewer .mushaf-wrap { transition: transform 160ms ease; touch-action: pan-y; }
+.gtile {
+  position: relative; display: grid; place-items: center;
   border: 1px solid var(--line); border-radius: var(--radius-xs); background: var(--surface-000); color: var(--ink-muted);
   font: inherit; cursor: pointer; overflow: hidden;
 }
-.thumb { width: 32px; height: 46px; font-size: 11px; }
 .thumb__lines {
   position: absolute; inset: 7px 5px; opacity: .55;
   background: repeating-linear-gradient(to bottom, var(--line) 0 1.5px, transparent 1.5px 5px);
 }
-.thumb b, .gtile b { position: relative; font-weight: 600; background: var(--surface-000); padding: 0 2px; border-radius: 3px; }
-.thumb small { position: absolute; top: 1px; font-size: 8.5px; color: var(--gold-ink); background: var(--surface-000); }
-.thumb--juz { border-color: var(--gold); }
-.thumb.is-current, .gtile.is-current { border: 2px solid var(--brand); color: var(--brand); }
-.thumb.is-current { transform: scale(1.12); }
-.thumb:hover, .gtile:hover { border-color: var(--brand); }
+.gtile b { position: relative; font-weight: 600; background: var(--surface-000); padding: 0 2px; border-radius: 3px; }
+.gtile.is-current { border: 2px solid var(--brand); color: var(--brand); }
+.gtile:hover { border-color: var(--brand); }
 
 .viewer .player {
   position: static; inset: auto; margin: 0 var(--space-3) var(--space-3);

@@ -1,11 +1,11 @@
 /**
  * The reading page as a gallery-style viewer: a top bar (back to the page
- * grid, title, tools), the page, a strip of page thumbnails and the player
+ * grid, title, tools), the page, previous / next page buttons and the player
  * at the bottom, a floating tajweed button, and a bottom sheet holding the
  * tajweed / tafsir / similar-verses panels. Pen marks and the five switches
  * live in localStorage. main.js keeps the selection, the player and the panels.
  */
-import { juzName, mushafIndex, pageInfo } from "./mushaf-meta.js";
+import { juzName, mushafIndex } from "./mushaf-meta.js";
 import { ar, el } from "./util.js";
 
 const MARKS_KEY = "hifz.marks.v1";
@@ -29,7 +29,6 @@ export class Viewer {
     this.sheetState = "closed";
     this.index = null;
     this.page = null;
-    mushafIndex().then((idx) => { this.index = idx; this.buildStrip(); this.syncStrip(); }).catch(() => {});
 
     $("v-grid").addEventListener("click", () => this.openGrid());
     $("grid-close").addEventListener("click", () => this.closeGrid());
@@ -74,18 +73,34 @@ export class Viewer {
     this.dragSheet();
     matchMedia("(min-width: 1200px)").addEventListener("change", () => this.setSheet(this.sheetState));
 
-    // swipe between pages, as in a printed mushaf: the next page comes from the left
+    // previous / next page, and swiping the page (finger or mouse) as in a printed
+    // mushaf: drag towards the right for the next page, towards the left for the previous
+    $("pg-prev").addEventListener("click", () => this.step(-1));
+    $("pg-next").addEventListener("click", () => this.step(1));
     let sx = null, sy = 0;
-    const stage = $("stage");
-    stage.addEventListener("pointerdown", (e) => { if (e.pointerType !== "mouse") { sx = e.clientX; sy = e.clientY; } });
-    stage.addEventListener("pointerup", (e) => {
+    const stage = $("stage"), wrap = $("mushaf-wrap");
+    stage.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0 || this.penOn || e.target.closest("button, input, select, a")) return;
+      if (e.pointerType === "mouse") e.preventDefault(); // no text selection while dragging
+      sx = e.clientX; sy = e.clientY;
+    });
+    stage.addEventListener("pointermove", (e) => {
+      if (sx == null) return;
+      const dx = e.clientX - sx;
+      if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(e.clientY - sy)) wrap.style.transform = `translateX(${dx * 0.25}px)`;
+    });
+    const release = (e) => {
       if (sx == null) return;
       const dx = e.clientX - sx, dy = e.clientY - sy;
       sx = null;
-      if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.6 && this.page) this.goPage(this.page + (dx > 0 ? 1 : -1));
-    });
+      wrap.style.removeProperty("transform");
+      if (e.type === "pointerup" && Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.6) this.step(dx > 0 ? 1 : -1);
+    };
+    stage.addEventListener("pointerup", release);
+    stage.addEventListener("pointercancel", release);
+    stage.addEventListener("pointerleave", release);
 
-    // the page leaves room for the dock (sheet handle, strip, player) whatever its height
+    // the page leaves room for the dock (sheet handle, page buttons, player) whatever its height
     const dock = $("dock");
     new ResizeObserver(() => $("view-hifz").style.setProperty("--dock-h", `${dock.offsetHeight}px`)).observe(dock);
 
@@ -93,43 +108,20 @@ export class Viewer {
     this.setSheet(wide() && this.settings.panelOpen !== false ? "half" : "closed");
   }
 
-  // ── title, strip ─────────────────────────────────────
+  step(dir) {
+    if (this.page) this.goPage(Math.min(604, Math.max(1, this.page + dir)));
+  }
+
+  // ── title, page buttons ──────────────────────────────
   /** Called after every selection / current-ayah change. */
   update({ surahName, page, juz, ayah }) {
     $("v-title").textContent = `سورة ${surahName}`;
     $("v-sub").textContent = [juz ? juzName(juz) : null, page ? `الصفحة ${ar(page)}` : null, ayah ? `الآية ${ar(ayah)}` : null].filter(Boolean).join("، ");
-    if (page && page !== this.page) { this.page = page; this.syncStrip(); }
-  }
-
-  buildStrip() {
-    const strip = $("strip");
-    const names = new Map(this.surahs.map((s) => [s.id, s.name]));
-    const frag = document.createDocumentFragment();
-    for (let p = 1; p <= 604; p++) {
-      const { juz, surah } = pageInfo(this.index, p);
-      const startsJuz = this.index.juz[juz - 1] === p;
-      frag.append(el("button", {
-        type: "button", class: "thumb" + (startsJuz ? " thumb--juz" : ""), dataset: { p },
-        "aria-label": `الصفحة ${ar(p)}، سورة ${names.get(surah)}، ${juzName(juz)}`,
-      }, el("span", { class: "thumb__lines", "aria-hidden": "true" }), el("b", {}, ar(p)), startsJuz ? el("small", {}, `ج${ar(juz)}`) : null));
-    }
-    strip.replaceChildren(frag);
-    strip.addEventListener("click", (e) => {
-      const b = e.target.closest(".thumb");
-      if (b) this.goPage(+b.dataset.p);
-    });
-  }
-
-  syncStrip() {
-    const strip = $("strip");
-    if (!this.page || !strip.firstChild) return;
-    strip.querySelector(".thumb.is-current")?.classList.remove("is-current");
-    const b = strip.querySelector(`.thumb[data-p="${this.page}"]`);
-    if (!b) return;
-    b.classList.add("is-current");
-    b.setAttribute("aria-current", "page");
-    const left = b.offsetLeft - strip.clientWidth / 2 + b.offsetWidth / 2;
-    strip.scrollTo({ left, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    if (!page) return;
+    this.page = page;
+    $("pg-label").textContent = `${ar(page)} / ${ar(604)}`;
+    $("pg-prev").disabled = page <= 1;
+    $("pg-next").disabled = page >= 604;
   }
 
   // ── page grid (the back button) ──────────────────────
