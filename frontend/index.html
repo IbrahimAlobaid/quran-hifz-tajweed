@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="css/learn.css">
   <link rel="stylesheet" href="css/reader.css">
   <link rel="stylesheet" href="css/plans.css">
+  <link rel="stylesheet" href="css/mutashabihat.css">
   <script>
     // Apply the saved theme before first paint to avoid a flash.
     try { const s = JSON.parse(localStorage.getItem("hifz.v1") || "{}"); if (s.theme) document.documentElement.dataset.theme = s.theme; } catch {}
@@ -30,8 +31,9 @@
       </div>
     </div>
     <nav class="mainnav" aria-label="أقسام الموقع">
-      <a href="#/" data-view="hifz">الحفظ والاستماع</a>
+      <a href="#/" data-view="hifz">الحفظ<span class="nav-long"> والاستماع</span></a>
       <a href="#/plan" data-view="plan">خطط الحفظ</a>
+      <a href="#/mut" data-view="mut">المتشابهات</a>
       <a href="#/learn" data-view="learn">تعلّم التجويد</a>
     </nav>
     <button class="icon-btn" id="theme-btn" type="button" aria-label="تبديل الوضع الليلي" title="الوضع الليلي">
@@ -134,6 +136,7 @@
       <div class="side-tabs" role="tablist" aria-label="اللوحة الجانبية">
         <button type="button" role="tab" id="tab-tajweed" aria-controls="side-tajweed" data-v="tajweed">التجويد</button>
         <button type="button" role="tab" id="tab-tafsir" aria-controls="tafsir-panel" data-v="tafsir">التفسير</button>
+        <button type="button" role="tab" id="tab-mut" aria-controls="mut-panel" data-v="mut">المتشابهات</button>
       </div>
       <div id="side-tajweed" class="side-group" role="tabpanel" aria-labelledby="tab-tajweed">
       <section class="panel" id="word-panel">
@@ -159,6 +162,7 @@
       </section>
       </div>
       <section class="panel tafsir" id="tafsir-panel" role="tabpanel" aria-labelledby="tab-tafsir" hidden></section>
+      <section class="panel mut-panel" id="mut-panel" role="tabpanel" aria-labelledby="tab-mut" hidden></section>
     </aside>
   </main>
 
@@ -193,6 +197,7 @@
   </div>
 
   <div id="view-plan" class="learn" hidden></div>
+  <div id="view-mut" class="learn" hidden></div>
   <div id="view-learn" class="learn" hidden></div>
 
   <audio id="audio" preload="auto"></audio>

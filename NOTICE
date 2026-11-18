@@ -20,3 +20,10 @@ covered by the MIT license in LICENSE:
     al-Baghawi, al-Wasit, Ibn Kathir, al-Qurtubi, al-Tabari) - Quran
     Foundation terms; spa5k/tafsir_api via jsDelivr (al-Mukhtasar by Tafsir
     Center, al-Jalalayn; data from QUL / Tarteel) - rights of their publishers.
+  * frontend/data/mutashabihat/ (places of similar verses)
+      Derived from "Quran Mutashabihat Data" by Waqar Akram, based on the work
+      of Qari Idrees al-Asim — CC0 1.0. Attribution kept at the author's
+      request: https://github.com/Waqar144/Quran_Mutashabihat_Data
+  * backend/data/mutashabihat_dawabit.json: rules 1-10 and their examples
+      follow "10 qawa'id muhimma fi dabt al-ayat al-mutashabiha" by Abdul-Shakur
+      Mu'allim Abd Farah (alukah.net), reworded.

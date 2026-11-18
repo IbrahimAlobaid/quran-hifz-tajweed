@@ -5,6 +5,7 @@ import { settings, save } from "./store.js";
 import { TafsirPanel } from "./tafsir.js";
 import { TajweedPanel } from "./tajweed.js";
 import { ar, el } from "./util.js";
+import { MutPanel, MutView } from "./mutashabihat.js";
 import { PlansView } from "./plans.js";
 import { MushafView } from "./view.js";
 
@@ -29,7 +30,7 @@ const view = new MushafView({ root: ui.mushaf, head: $("surah-head"), wrap: $("m
 // three for a mushaf page that holds the end of a surah and the next ones.
 // The player works on one segment at a time (`act`) and moves on at its end.
 let surahs = [], segs = [], act = 0, pagePass = 1;
-let panel = null, tafsir = null, learn = null, plans = null, loadToken = 0, actToken = 0;
+let panel = null, tafsir = null, learn = null, plans = null, muts = null, mutView = null, loadToken = 0, actToken = 0;
 let setHideUI = null, setUnitUI = null;
 const isPage = () => settings.unit === "page";
 const cur = () => segs[act];
@@ -139,6 +140,7 @@ async function loadSelection({ at = null } = {}) {
     panel.renderLegend(countRules(segs));
     if (panel.focused) view.focusRule(panel.focused);
     tafsir.setSelection(segs);
+    muts.mark(segs, ui.mushaf);
     const i = at ? Math.max(0, segIndex(at.s)) : 0;
     await activate(i, { ayah: at?.n, token });
     if (token !== loadToken) return;
@@ -185,6 +187,7 @@ function onAyahChanged() {
   view.setAyah(s, player.cur);
   panel.showAyah(view.ayahData(s, player.cur), (n, p) => pickWord(s, n, p));
   tafsir.setCurrent(s, player.cur);
+  muts.setCurrent(s, player.cur);
 }
 
 function countRules(list) {
@@ -393,8 +396,10 @@ function setSideTab(v) {
   save({ sideTab: v });
   $("side-tajweed").hidden = v !== "tajweed";
   $("tafsir-panel").hidden = v !== "tafsir";
-  document.querySelector(".layout").classList.toggle("is-tafsir", v === "tafsir");
+  $("mut-panel").hidden = v !== "mut";
+  document.querySelector(".layout").classList.toggle("is-tafsir", v !== "tajweed");
   tafsir.setActive(v === "tafsir");
+  muts.setActive(v === "mut");
 }
 
 /**
@@ -434,16 +439,18 @@ function takeQuery() {
 // ── routing: #/ (memorize) · #/plan/... (plans) · #/learn/... (learn tajweed) ──
 function route() {
   const parts = (location.hash || "#/").split("?")[0].replace(/^#\/?/, "").split("/").filter(Boolean);
-  const page = parts[0] === "learn" || parts[0] === "plan" ? parts[0] : "hifz";
+  const page = ["learn", "plan", "mut"].includes(parts[0]) ? parts[0] : "hifz";
   $("view-hifz").hidden = page !== "hifz";
   $("view-learn").hidden = page !== "learn";
   $("view-plan").hidden = page !== "plan";
+  $("view-mut").hidden = page !== "mut";
   document.body.classList.toggle("in-learn", page !== "hifz");
   document.querySelectorAll(".mainnav a").forEach((a) =>
     a.setAttribute("aria-current", String(a.dataset.view === page ? "page" : "false")));
   if (page !== "hifz") player.pause();
   if (page === "learn") learn?.show(parts.slice(1)); else learn?.hide();
   if (page === "plan") plans?.show(parts[1]);
+  if (page === "mut") mutView?.show(parts[1]);
   if (page === "hifz" && takeQuery() && segs.length) {
     player.stop();
     window.scrollTo({ top: 0 });
@@ -493,11 +500,13 @@ async function boot() {
       root: $("tafsir-panel"), onAyah: goToAyah,
       state: { source: settings.tafsir, scope: settings.tafsirScope }, onChange: save,
     });
+    muts = new MutPanel({ root: $("mut-panel"), tab: $("tab-mut"), surahs });
     bindSegmented(document.querySelector(".side-tabs"), settings.sideTab, setSideTab, "aria-selected");
     setSideTab(settings.sideTab);
 
     learn = new LearnView({ root: $("view-learn"), clipAudio: $("clip-audio"), reciters });
     plans = new PlansView({ root: $("view-plan"), surahs });
+    mutView = new MutView({ root: $("view-mut"), surahs });
     addEventListener("hashchange", route);
     route();
     await loadSelection();

@@ -3,7 +3,7 @@ GitHub Pages, Netlify…). No server is needed afterwards:
 
   dist/
     index.html               (hifz-mode switched to "static")
-    css/ js/ fonts/ data/learn/ data/plans/
+    css/ js/ fonts/ data/learn/ data/plans/ data/mutashabihat/
     data/static/surahs.json, reciters.json, tajweed-rules.json
     data/static/surah/NNN.json           text + tajweed + rule reasons
     data/static/timings/RID/NNN.json     word timings + CDN audio URL
@@ -37,6 +37,8 @@ HEADERS = """/data/static/*
 /data/learn/*
   Cache-Control: public, max-age=86400
 /data/plans/*
+  Cache-Control: public, max-age=86400
+/data/mutashabihat/*
   Cache-Control: public, max-age=86400
 /fonts/*
   Cache-Control: public, max-age=31536000, immutable

@@ -1,0 +1,71 @@
+/* «المتشابهات»: side panel, ayah marks and the #/mut page. Tokens from app.css. */
+
+:root { --mut-diff: #b4232f; --mut-diff-bg: #fbe3e5; --mut-near: #9a5b00; --mut-near-bg: #fbedcf; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --mut-diff: #ff8f98; --mut-diff-bg: #4a1f26; --mut-near: #f2c26b; --mut-near-bg: #43351a; }
+}
+:root[data-theme="dark"] { --mut-diff: #ff8f98; --mut-diff-bg: #4a1f26; --mut-near: #f2c26b; --mut-near-bg: #43351a; }
+
+/* an ayah number with similar places elsewhere */
+.ayah-end.has-mut { text-decoration: underline dotted var(--mut-near); text-decoration-thickness: 2px; text-underline-offset: .32em; }
+
+/* side tabs: three now */
+.side-tabs button { padding: 7px 6px; white-space: nowrap; }
+.tab-count {
+  display: inline-grid; place-items: center; min-width: 1.5em; height: 1.5em; margin-inline-start: 5px;
+  border-radius: 999px; font-size: 11.5px; background: var(--mut-near-bg); color: var(--mut-near);
+}
+.side-tabs button[aria-selected="true"] .tab-count { background: var(--lapis-ink); color: var(--lapis); }
+
+.mut-more { font-size: 12.5px; color: var(--lapis); }
+.mut-credit { font-size: 12px; margin: 12px 0 0; }
+
+/* a comparison */
+.mut-legend { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin: 0 0 10px; font-size: 12.5px; }
+.mut-legend .mw { font-family: inherit; font-size: 12px; padding: 1px 8px; }
+.mut-pair { border: 1px solid var(--line); border-radius: var(--r-md); padding: 10px 12px; margin: 0 0 12px; background: var(--paper); }
+.mut-side + .mut-side { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.mut-side__head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 12.5px; }
+.mut-ref { font-weight: 700; color: var(--lapis); }
+.mut-side.is-here .mut-ref { color: var(--ink); }
+.mut-go { color: var(--lapis); font-size: 12.5px; }
+.mut-text { margin: 2px 0 0; font-family: var(--font-q); font-size: 23px; line-height: 2.05; }
+.mw { border-radius: 4px; padding: 0 .06em; }
+.mw--diff { color: var(--mut-diff); background: var(--mut-diff-bg); }
+.mw--near { color: var(--mut-near); background: var(--mut-near-bg); box-shadow: inset 0 -2px 0 var(--mut-near); }
+.mw--ctx { opacity: .62; }
+.mut-gap, .mut-end { color: var(--ink-2); font-family: var(--font-ui); font-size: .55em; }
+.mut-end::before { content: "("; } .mut-end::after { content: ")"; }
+.mut-pair.is-loose .mut-text { font-size: 20px; }
+.mut-loose, .mut-ctxnote { margin: 6px 0 0; font-size: 12.5px; }
+.mut-dabit { margin: 8px 0 0; padding: 8px 10px; border-radius: var(--r-sm); background: var(--lapis-tint); font-size: 14px; line-height: 1.8; }
+.mut-dabit b { color: var(--lapis); }
+
+/* the #/mut page */
+.mut-page .mut-pair { background: var(--surface); }
+.mut-rules { display: flex; flex-direction: column; gap: 22px; }
+.mut-rule h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; font-size: 18px; }
+.mut-rule__n { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid var(--lapis); color: var(--lapis); font-size: 14px; }
+.mut-rule > p { margin: 0 0 10px; font-size: 15px; }
+.mut-rule .mut-dabit { margin: -4px 0 14px; }
+.mut-pick { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+.mut-pick select { height: 38px; min-width: 220px; padding: 0 8px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--paper); font-size: 14.5px; }
+.mut-list { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }
+.mut-item { border: 1px solid var(--line); border-radius: var(--r-md); padding: 8px 12px; }
+.mut-item summary { cursor: pointer; font-size: 14.5px; line-height: 1.8; }
+.mut-item summary .tag { margin-inline-start: 6px; font-size: 11.5px; }
+.mut-item[open] summary { margin-bottom: 8px; }
+.mut-practice__bar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin-bottom: 14px; }
+.mut-practice__bar .btn { height: 38px; }
+.mut-quiz .quiz__list { gap: 22px; }
+.mut-q { font-size: 24px; }
+.mut-blank { display: inline-block; min-width: 3em; text-align: center; border-bottom: 2px solid var(--lapis); color: var(--lapis); font-family: var(--font-ui); font-size: .7em; }
+.mut-opt { font-family: var(--font-q); font-size: 22px; text-align: center; }
+.mut-why { margin-top: 10px; }
+
+@media (max-width: 760px) {
+  .nav-long { display: none; }
+  .mainnav a { padding: 7px 4px; font-size: 13.5px; }
+  .mut-text { font-size: 21px; }
+  .mut-pick select { min-width: 0; max-width: 62vw; }
+}

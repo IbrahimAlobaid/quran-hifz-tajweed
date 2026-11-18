@@ -15,7 +15,7 @@ const DEFAULTS = {
   dim: true,
   qSize: null,
   theme: null,
-  sideTab: "tajweed", // "tajweed" | "tafsir"
+  sideTab: "tajweed", // "tajweed" | "tafsir" | "mut"
   tafsir: "muyassar",
   tafsirScope: "ayah", // "ayah" | "all"
 };
