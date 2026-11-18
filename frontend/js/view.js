@@ -8,18 +8,21 @@
  * Everything is keyed by surah too ("s:n" / "s:n:p") so a page that holds the
  * end of one surah and the start of the next never confuses ayah numbers.
  */
+import { juzName } from "./mushaf-meta.js";
 import { ar, el, reducedMotion } from "./util.js";
 
 const BASMALA = "بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ";
 const MAX_PAGE_FONT = 40;
-const MIN_PAGE_FONT = 19; // below this the page reflows (same ayahs) rather than strain the eyes
+const MIN_PAGE_FONT = 11; // keep the 15 mushaf lines down to a small phone; reflow only below this
 
 export class MushafView extends EventTarget {
-  constructor({ root, head, wrap }) {
+  /** wrap: the element whose inner width the page fills; foot: where the page number goes. */
+  constructor({ root, head, wrap, foot }) {
     super();
     this.root = root;
     this.head = head;
     this.wrap = wrap;
+    this.foot = foot;
     this.words = new Map();   // "s:n:p" -> element
     this.ayahs = new Map();   // "s:n"   -> [elements] (an ayah may span several lines)
     this.segs = [];
@@ -69,6 +72,7 @@ export class MushafView extends EventTarget {
   }
 
   _renderFlow({ s, from, to }) {
+    this.foot?.replaceChildren();
     this.root.style.removeProperty("--page-font");
     this.root.style.removeProperty("--page-w");
     this.head.replaceChildren(
@@ -91,13 +95,13 @@ export class MushafView extends EventTarget {
   _renderPage(segs, page) {
     const first = segs[0];
     const v0 = first.s.verses.find((v) => v.n === first.from);
-    const names = segs.map((x) => x.s.name).join(" و");
+    // As in the printed mushaf: the juz on the right, the surah on the left, the page number below.
     this.head.replaceChildren(
       el("p", { class: "page-head" },
-        el("span", {}, `سورة ${names}`),
-        el("span", {}, `الجزء ${ar(v0?.juz ?? 1)}`),
-        el("span", {}, `الصفحة ${ar(page)}`)),
+        el("span", { class: "page-head__juz" }, juzName(v0?.juz ?? 1)),
+        el("span", { class: "page-head__surah" }, `سورة ${first.s.name}`)),
     );
+    this.foot?.replaceChildren(ar(page));
 
     // Flatten the page into [line, item] in reading order, then group by line.
     const lines = [];
@@ -121,7 +125,10 @@ export class MushafView extends EventTarget {
     const frag = document.createDocumentFragment();
     for (const ln of lines) {
       if (ln.header) {
-        frag.append(el("div", { class: "page-surah" }, el("span", {}, `سورة ${ln.header.name}`)));
+        frag.append(el("div", { class: "page-surah" },
+          el("span", { class: "page-surah__m", title: "ترتيبها في المصحف" }, el("small", {}, "ترتيبها"), ar(ln.header.id)),
+          el("span", { class: "page-surah__name" }, `سورة ${ln.header.name}`),
+          el("span", { class: "page-surah__m", title: "عدد آياتها" }, el("small", {}, "آياتها"), ar(ln.header.ayahs))));
         if (ln.header.bismillah) frag.append(el("p", { class: "basmala basmala--page" }, BASMALA));
         continue;
       }
