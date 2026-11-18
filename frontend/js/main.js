@@ -5,6 +5,7 @@ import { settings, save } from "./store.js";
 import { TafsirPanel } from "./tafsir.js";
 import { TajweedPanel } from "./tajweed.js";
 import { ar, el } from "./util.js";
+import { PlansView } from "./plans.js";
 import { MushafView } from "./view.js";
 
 const PAGES = 604;
@@ -28,7 +29,8 @@ const view = new MushafView({ root: ui.mushaf, head: $("surah-head"), wrap: $("m
 // three for a mushaf page that holds the end of a surah and the next ones.
 // The player works on one segment at a time (`act`) and moves on at its end.
 let surahs = [], segs = [], act = 0, pagePass = 1;
-let panel = null, tafsir = null, learn = null, loadToken = 0, actToken = 0;
+let panel = null, tafsir = null, learn = null, plans = null, loadToken = 0, actToken = 0;
+let setHideUI = null, setUnitUI = null;
 const isPage = () => settings.unit === "page";
 const cur = () => segs[act];
 
@@ -36,6 +38,7 @@ const cur = () => segs[act];
 function fillRepeatSelect(sel, max, label) {
   sel.replaceChildren(
     ...Array.from({ length: max }, (_, i) => el("option", { value: i + 1 }, i === 0 ? "مرة واحدة" : `${ar(i + 1)} ${label}`)),
+    el("option", { value: 20 }, `${ar(20)} مرة`), // طريقة الشيخ عبد المحسن القاسم
     el("option", { value: 0 }, "بلا توقف"),
   );
 }
@@ -49,6 +52,7 @@ function bindSegmented(group, value, onChange, attr = "aria-checked") {
     set(b.dataset.v);
     onChange(b.dataset.v);
   });
+  return set;
 }
 
 function showState(msg, { error = false, retry = null } = {}) {
@@ -353,7 +357,7 @@ $("theme-btn").addEventListener("click", () => {
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => panel?.applyColors());
 
 document.addEventListener("keydown", (e) => {
-  if (document.body.classList.contains("in-learn")) return;
+  if (document.body.classList.contains("in-learn")) return; // learn and plans pages
   if (e.target.closest("input, select, textarea") || e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.code === "Space" && !e.target.closest(".w, button")) { e.preventDefault(); player.toggle(); }
   else if (e.key === "ArrowLeft") { e.preventDefault(); step(1); }   // RTL: left = forward
@@ -393,19 +397,58 @@ function setSideTab(v) {
   tafsir.setActive(v === "tafsir");
 }
 
-// ── routing: #/ (memorize) · #/learn/... (learn tajweed) ─────────────
+/**
+ * Links from «خطط الحفظ» open the memorize page on a selection and settings:
+ * #/?page=P | #/?s=S&from=A&to=B, plus ar (repeat each ayah), rr (repeat the
+ * range), gap, hide, unit. Applied once, then the hash goes back to #/.
+ */
+function takeQuery() {
+  const q = location.hash.split("?")[1];
+  if (!q) return false;
+  const p = new URLSearchParams(q);
+  const int = (k) => (p.has(k) && Number.isFinite(+p.get(k)) ? Math.trunc(+p.get(k)) : null);
+  const patch = {};
+  if (int("page") != null) Object.assign(patch, { unit: "page", page: clampPage(int("page")) });
+  const s = int("s");
+  if (s != null && surahs.some((m) => m.id === s)) {
+    const max = surahs.find((m) => m.id === s).ayahs;
+    const from = Math.min(Math.max(int("from") ?? 1, 1), max);
+    Object.assign(patch, { unit: "ayahs", surah: s, from, to: Math.min(Math.max(int("to") ?? from, from), max) });
+  }
+  if (p.get("unit") === "page" || p.get("unit") === "ayahs") patch.unit ??= p.get("unit");
+  const ar_ = int("ar"), rr = int("rr");
+  if (ar_ != null && [...ui.ayahRepeat.options].some((o) => +o.value === ar_)) patch.ayahRepeat = ar_;
+  if (rr != null && [...ui.rangeRepeat.options].some((o) => +o.value === rr)) patch.rangeRepeat = rr;
+  if (p.has("gap") && [...ui.gap.options].some((o) => o.value === p.get("gap"))) patch.gap = p.get("gap");
+  if (["show", "reveal", "first", "hide"].includes(p.get("hide"))) patch.hideMode = p.get("hide");
+  history.replaceState(null, "", "#/");
+  save(patch);
+  ui.surah.value = settings.surah; ui.from.value = settings.from; ui.to.value = settings.to; ui.page.value = settings.page;
+  ui.ayahRepeat.value = settings.ayahRepeat; ui.rangeRepeat.value = settings.rangeRepeat; ui.gap.value = settings.gap;
+  setHideUI?.(settings.hideMode); setUnitUI?.(settings.unit);
+  view.setMode(settings.hideMode);
+  player.setOptions({ ayahRepeat: settings.ayahRepeat, rangeRepeat: segs.length > 1 ? 1 : settings.rangeRepeat, gap: settings.gap });
+  return true;
+}
+
+// ── routing: #/ (memorize) · #/plan/... (plans) · #/learn/... (learn tajweed) ──
 function route() {
-  const parts = (location.hash || "#/").replace(/^#\/?/, "").split("/").filter(Boolean);
-  const isLearn = parts[0] === "learn";
-  $("view-hifz").hidden = isLearn;
-  $("view-learn").hidden = !isLearn;
-  document.body.classList.toggle("in-learn", isLearn);
+  const parts = (location.hash || "#/").split("?")[0].replace(/^#\/?/, "").split("/").filter(Boolean);
+  const page = parts[0] === "learn" || parts[0] === "plan" ? parts[0] : "hifz";
+  $("view-hifz").hidden = page !== "hifz";
+  $("view-learn").hidden = page !== "learn";
+  $("view-plan").hidden = page !== "plan";
+  document.body.classList.toggle("in-learn", page !== "hifz");
   document.querySelectorAll(".mainnav a").forEach((a) =>
-    a.setAttribute("aria-current", String(a.dataset.view === (isLearn ? "learn" : "hifz") ? "page" : "false")));
-  if (isLearn) {
-    player.pause();
-    learn?.show(parts.slice(1));
-  } else learn?.hide();
+    a.setAttribute("aria-current", String(a.dataset.view === page ? "page" : "false")));
+  if (page !== "hifz") player.pause();
+  if (page === "learn") learn?.show(parts.slice(1)); else learn?.hide();
+  if (page === "plan") plans?.show(parts[1]);
+  if (page === "hifz" && takeQuery() && segs.length) {
+    player.stop();
+    window.scrollTo({ top: 0 });
+    loadSelection();
+  }
 }
 
 // ── boot ───────────────────────────────────────────────
@@ -443,8 +486,8 @@ async function boot() {
     panel.applyColors(settings.palette);
     panel.addEventListener("focus", ({ detail }) => view.focusRule(detail.rule));
     bindSegmented(ui.palette, settings.palette, (v) => { save({ palette: v }); panel.applyColors(v); });
-    bindSegmented(ui.hideMode, settings.hideMode, (v) => { save({ hideMode: v }); view.setMode(v); });
-    bindSegmented(ui.unit, settings.unit, setUnit);
+    setHideUI = bindSegmented(ui.hideMode, settings.hideMode, (v) => { save({ hideMode: v }); view.setMode(v); });
+    setUnitUI = bindSegmented(ui.unit, settings.unit, setUnit);
 
     tafsir = new TafsirPanel({
       root: $("tafsir-panel"), onAyah: goToAyah,
@@ -454,6 +497,7 @@ async function boot() {
     setSideTab(settings.sideTab);
 
     learn = new LearnView({ root: $("view-learn"), clipAudio: $("clip-audio"), reciters });
+    plans = new PlansView({ root: $("view-plan"), surahs });
     addEventListener("hashchange", route);
     route();
     await loadSelection();

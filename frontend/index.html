@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="css/app.css">
   <link rel="stylesheet" href="css/learn.css">
   <link rel="stylesheet" href="css/reader.css">
+  <link rel="stylesheet" href="css/plans.css">
   <script>
     // Apply the saved theme before first paint to avoid a flash.
     try { const s = JSON.parse(localStorage.getItem("hifz.v1") || "{}"); if (s.theme) document.documentElement.dataset.theme = s.theme; } catch {}
@@ -30,6 +31,7 @@
     </div>
     <nav class="mainnav" aria-label="أقسام الموقع">
       <a href="#/" data-view="hifz">الحفظ والاستماع</a>
+      <a href="#/plan" data-view="plan">خطط الحفظ</a>
       <a href="#/learn" data-view="learn">تعلّم التجويد</a>
     </nav>
     <button class="icon-btn" id="theme-btn" type="button" aria-label="تبديل الوضع الليلي" title="الوضع الليلي">
@@ -190,6 +192,7 @@
   </footer>
   </div>
 
+  <div id="view-plan" class="learn" hidden></div>
   <div id="view-learn" class="learn" hidden></div>
 
   <audio id="audio" preload="auto"></audio>

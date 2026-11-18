@@ -1,0 +1,161 @@
+/* «خطط الحفظ» page. Tokens from app.css; layout shell (.learn__wrap, .learn__bar, .learn-hero) from learn.css. */
+
+.plans { --near: #2f7d4f; --far: #8a6a2b; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .plans { --near: #6fcf97; --far: #d9b56a; } }
+:root[data-theme="dark"] .plans { --near: #6fcf97; --far: #d9b56a; }
+
+.plans a.btn { text-decoration: none; color: inherit; }
+.plans a.btn--primary { color: var(--lapis-ink); }
+.btn--sm { height: 30px; padding: 0 12px; font-size: 13px; }
+.linkish { border: 0; background: none; padding: 0; cursor: pointer; color: var(--lapis); font-size: 13.5px; font-weight: 600; }
+.linkish:hover { text-decoration: underline; }
+.plans .learn__bar .subnav a { white-space: nowrap; }
+[id^="plan-"] { scroll-margin-top: 76px; }
+
+.plan-sec { margin: 0 0 14px; padding: clamp(18px, 3.5vw, 32px); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); }
+.plan-sec > h2 { font-size: 23px; margin: 0 0 6px; line-height: 1.4; }
+.plan-sec__intro { margin: 0 0 18px; color: var(--ink-2); max-width: 66ch; font-size: 15.5px; line-height: 1.85; }
+.plan-sec p { line-height: 1.85; }
+.plan-sub { font-size: 17px; margin: 26px 0 6px; }
+.plan-note { margin: 14px 0 0; font-size: 14px; }
+.plan-sec--first { padding: 0; overflow: hidden; border-color: color-mix(in srgb, var(--lapis) 45%, var(--line)); }
+
+/* ── planner: the form ──────────────────────────────── */
+.planner__form, .today { padding: clamp(18px, 3.5vw, 30px); }
+.planner__title, .today__head h2 { font-size: 23px; margin: 0 0 16px; }
+.planner__field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; align-items: flex-start; }
+.planner__label { font-size: 14px; font-weight: 600; }
+.planner__help { font-size: 13px; margin: -10px 0 16px; }
+.planner__field .planner__help { margin: 0; }
+.planner__seg { flex-wrap: wrap; border-radius: var(--r-md); max-width: 100%; }
+.planner__seg button { border-radius: calc(var(--r-md) - 2px); padding: 6px 14px; display: flex; flex-direction: column; align-items: center; line-height: 1.35; font-size: 14.5px; }
+.planner__seg small { font-size: 11.5px; opacity: .78; font-weight: 400; }
+#plan-known { height: 40px; min-width: 220px; padding: 0 10px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--paper); font-size: 14.5px; }
+.planner__sum { margin: 4px 0 16px; padding: 12px 14px; border-radius: var(--r-sm); background: var(--lapis-tint); font-size: 15px; line-height: 1.8; }
+
+/* ── planner: today's portion ───────────────────────── */
+.today__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; margin-bottom: 14px; }
+.today__head h2 { margin: 0; }
+.today__head p { margin: 0; font-size: 13.5px; }
+.tracks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.track {
+  --rail: var(--lapis);
+  display: grid; grid-template-columns: 112px minmax(0, 1fr) auto; gap: 6px 16px; align-items: center;
+  padding: 14px 16px; border-radius: var(--r-md); background: var(--paper);
+  border: 1px solid var(--line); border-inline-start: 5px solid var(--rail);
+}
+.track--near { --rail: var(--near); }
+.track--far { --rail: var(--far); }
+.track__label { font-size: 13.5px; font-weight: 700; color: var(--rail); }
+.track__body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.track__body strong { font-size: 17px; font-weight: 600; line-height: 1.6; }
+.track__body .muted { font-size: 13.5px; }
+.track__links { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.track--new .track__body strong { font-size: 19px; }
+
+.today__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 18px 0 4px; }
+.today__actions .btn { height: 40px; padding: 0 16px; font-weight: 600; }
+.today__progress { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.today__progress .progress { margin-bottom: 6px; }
+.today__progress > p { margin: 0 0 12px; font-size: 13.5px; }
+.today__foot { display: flex; gap: 18px; margin: 14px 0 0; }
+
+/* the mushaf in 30 juz, filled by what is memorized */
+.juzmap { display: grid; grid-template-columns: repeat(30, minmax(0, 1fr)); gap: 3px; }
+.juzmap__c {
+  position: relative; height: 38px; border-radius: 3px; overflow: hidden;
+  background: color-mix(in srgb, var(--line) 70%, transparent);
+  display: grid; place-items: end center;
+}
+.juzmap__c::before {
+  content: ""; position: absolute; inset: auto 0 0 0; height: calc(var(--f) * 100%);
+  background: color-mix(in srgb, var(--lapis) 55%, transparent);
+}
+.juzmap__c.is-full::before { background: var(--lapis); }
+.juzmap__c span { position: relative; font-size: 10px; line-height: 1; padding-bottom: 3px; color: var(--ink-2); }
+.juzmap__c.is-full span { color: var(--lapis-ink); }
+
+/* ── ready plans ────────────────────────────────────── */
+.table-wrap { overflow-x: auto; }
+.ready { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+.ready th, .ready td { padding: 10px; border-bottom: 1px solid var(--line); text-align: start; vertical-align: middle; }
+.ready thead th { font-size: 12.5px; color: var(--ink-2); font-weight: 600; white-space: nowrap; }
+.ready tbody th { font-weight: 700; white-space: nowrap; }
+.ready tbody th .muted { font-weight: 400; font-size: 12.5px; }
+.ready td:nth-child(2), .ready td:nth-child(3), .ready td:nth-child(4) { white-space: nowrap; }
+.ready__fit { color: var(--ink-2); font-size: 13.5px; min-width: 200px; }
+
+/* ── methods ────────────────────────────────────────── */
+.methods { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 12px; }
+.method { border: 1px solid var(--line); border-radius: var(--r-md); padding: 16px 18px; background: var(--paper); display: flex; flex-direction: column; }
+.method__head h3 { margin: 0; font-size: 18.5px; color: var(--lapis); }
+.method__by { margin: 2px 0 10px; font-size: 13.5px; font-weight: 600; }
+.method__by .muted { font-weight: 400; }
+.method__lead { margin: 0 0 6px; font-size: 15px; }
+.method__steps { list-style-type: arabic-indic; margin: 0 0 10px; padding-inline-start: 22px; font-size: 15px; line-height: 1.8; }
+.method__steps li { margin-bottom: 4px; padding-inline-start: 2px; }
+.method__steps li::marker { color: var(--lapis); font-weight: 700; }
+.method__note { margin: 0 0 10px; font-size: 14px; padding: 8px 12px; border-radius: var(--r-sm); background: var(--surface); border: 1px dashed var(--line); }
+.method__fit { margin: 0 0 12px; font-size: 14px; }
+.method__apply { margin-top: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+.method__apply .muted { font-size: 12.5px; flex: 1 1 180px; line-height: 1.6; }
+
+/* ── review ─────────────────────────────────────────── */
+.hadith { margin: 0 0 16px; padding: 14px 18px; border-inline-start: 4px solid var(--lapis); background: var(--lapis-tint); border-radius: var(--r-sm); }
+.hadith p { margin: 0; font-family: "Noto Naskh Arabic", "Amiri", serif; font-size: 19px; line-height: 1.9; }
+.hadith cite { display: block; margin-top: 4px; font-style: normal; font-size: 12.5px; color: var(--ink-2); }
+.hadith--sm p { font-size: 17px; }
+.hadiths { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; margin-top: 18px; }
+.hadiths .hadith { margin: 0; }
+.stages { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 14px 0 6px; }
+.stage { border-top: 3px solid var(--lapis); padding-top: 10px; }
+.stage h3 { margin: 0 0 6px; font-size: 16.5px; }
+.stage p { margin: 0 0 8px; font-size: 14.5px; }
+.mini { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.mini td { padding: 5px 6px; border-bottom: 1px solid var(--line); }
+.mini td:last-child { white-space: nowrap; font-weight: 600; }
+.manazil td:last-child { white-space: normal; font-weight: 400; }
+.manazil td:nth-child(2) { white-space: nowrap; color: var(--ink-2); }
+.manazil__l { font-family: var(--font-q); font-size: 22px; color: var(--lapis); width: 1.6em; text-align: center; line-height: 1.3; }
+
+/* ── a day of memorization ──────────────────────────── */
+.dayplan { list-style: none; margin: 0; padding: 0; counter-reset: s; }
+.dayplan li { display: grid; grid-template-columns: 54px 1fr; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--line); counter-increment: s; }
+.dayplan li:last-child { border-bottom: 0; }
+.dayplan__min { align-self: start; text-align: center; padding: 4px 0; border-radius: var(--r-sm); background: var(--lapis-tint); color: var(--lapis); font-weight: 700; font-size: 14px; }
+.dayplan strong::before { content: counter(s, arabic-indic) ". "; color: var(--ink-2); font-weight: 400; }
+.dayplan p { margin: 2px 0 0; font-size: 14.5px; color: var(--ink-2); }
+
+/* ── rules ──────────────────────────────────────────── */
+.rules { display: grid; grid-template-columns: minmax(130px, 180px) 1fr; gap: 0; margin: 0; }
+.rules dt, .rules dd { padding: 10px 0; border-bottom: 1px solid var(--line); margin: 0; }
+.rules dt { font-weight: 700; padding-inline-end: 14px; }
+.rules dd { font-size: 15px; line-height: 1.8; }
+
+/* ── research ───────────────────────────────────────── */
+.science { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.finding { padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--r-md); }
+.finding h3 { margin: 0 0 6px; font-size: 16px; line-height: 1.6; }
+.finding p { margin: 0 0 8px; font-size: 14.5px; }
+.finding__so { padding: 8px 10px; background: var(--paper); border-radius: var(--r-sm); }
+.finding__ref { display: block; font-size: 12px; color: var(--ink-2); text-align: left; }
+
+/* ── videos and sources ─────────────────────────────── */
+.video__by { font-size: 12.5px; }
+.sources { padding-inline-start: 20px; margin: 0; font-size: 14.5px; line-height: 1.9; }
+.sources a { color: var(--lapis); }
+
+@media (max-width: 760px) {
+  .mainnav a { white-space: nowrap; padding: 7px 6px; font-size: 14px; }
+  .track { grid-template-columns: 1fr; padding: 12px 14px; }
+  .track__links { justify-content: flex-start; }
+  .juzmap { grid-template-columns: repeat(15, minmax(0, 1fr)); }
+  .juzmap__c { height: 30px; }
+  .methods, .science { grid-template-columns: 1fr; }
+  .rules { grid-template-columns: 1fr; }
+  .rules dt { border-bottom: 0; padding-bottom: 0; }
+  .plan-sec > h2 { font-size: 21px; }
+  .planner__seg button { padding: 6px 10px; font-size: 13.5px; }
+  .plans .learn__bar { padding: 8px 10px; }
+  .plans .subnav { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+}

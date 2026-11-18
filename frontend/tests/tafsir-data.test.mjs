@@ -1,4 +1,4 @@
-// Run: node --test frontend/tests
+// Run (in frontend/): node --test tests/*.test.mjs
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { createTafsirStore, groupSurah, LEVELS, mergePassages, SOURCES } from "../js/tafsir-data.js";

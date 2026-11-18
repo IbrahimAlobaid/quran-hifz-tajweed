@@ -3,7 +3,7 @@ GitHub Pages, Netlify…). No server is needed afterwards:
 
   dist/
     index.html               (hifz-mode switched to "static")
-    css/ js/ fonts/ data/learn/
+    css/ js/ fonts/ data/learn/ data/plans/
     data/static/surahs.json, reciters.json, tajweed-rules.json
     data/static/surah/NNN.json           text + tajweed + rule reasons
     data/static/timings/RID/NNN.json     word timings + CDN audio URL
@@ -35,6 +35,8 @@ from app.services.tajweed_rules import catalog  # noqa: E402
 HEADERS = """/data/static/*
   Cache-Control: public, max-age=86400
 /data/learn/*
+  Cache-Control: public, max-age=86400
+/data/plans/*
   Cache-Control: public, max-age=86400
 /fonts/*
   Cache-Control: public, max-age=31536000, immutable
