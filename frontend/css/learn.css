@@ -181,9 +181,15 @@ body.in-learn { padding-bottom: 32px; }
 
 .videos h2, .resources h2 { font-size: 21px; margin: 30px 0 10px; }
 .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.video-item { margin: 0; }
+.video__alt { margin-top: 6px; font-size: 13px; color: var(--ink-2); }
+.video__alt a { color: var(--lapis); font-weight: 600; }
 .video { aspect-ratio: 16 / 9; border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--line); background: var(--paper); }
 .video iframe { width: 100%; height: 100%; border: 0; display: block; }
-.video__facade { width: 100%; height: 100%; border: 0; cursor: pointer; background: var(--paper); color: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px; text-align: center; }
+.video__actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 4px; }
+.video__actions .btn { height: 36px; }
+.video__actions .btn svg { width: 14px; height: 14px; }
+.video__facade { width: 100%; height: 100%; border: 0; background: var(--paper); color: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px; text-align: center; }
 .video__play { width: 54px; height: 54px; border-radius: 50%; background: var(--lapis); color: var(--lapis-ink); display: grid; place-items: center; }
 .video__play svg { width: 22px; height: 22px; }
 .video__title { font-weight: 600; font-size: 14.5px; }

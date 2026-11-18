@@ -326,22 +326,39 @@ export class LearnView {
     return el("section", { class: "quiz" }, el("h2", {}, title), el("ol", { class: "quiz__list" }, items), score);
   }
 
+  /**
+   * A lesson video. YouTube decides per viewer whether an embed may play: for
+   * viewers it cannot recognise (not signed in, flagged network) it shows
+   * «sign in to confirm you're not a bot», which a site cannot bypass. So the
+   * card offers both: open the video on YouTube (always works) or try the
+   * embed here. The embed uses www.youtube.com, which can see a signed-in
+   * viewer, rather than youtube-nocookie.com, which never can.
+   */
   video(v) {
+    const id = encodeURIComponent(v.id);
+    const start = v.start ? +v.start : 0;
+    const watch = `https://www.youtube.com/watch?v=${id}${start ? `&t=${start}s` : ""}`;
     const box = el("div", { class: "video" });
-    const btn = el("button", { type: "button", class: "video__facade" },
-      el("span", { class: "video__play" }, icon(PLAY)),
-      el("span", { class: "video__title" }, v.title),
-      el("span", { class: "muted" }, "يُحمَّل من YouTube عند الضغط"));
-    btn.addEventListener("click", () => {
-      const start = v.start ? `&start=${+v.start}` : "";
+    const here = el("button", { type: "button", class: "btn" }, icon(PLAY), "شاهد هنا");
+    here.addEventListener("click", () => {
+      const params = new URLSearchParams({ autoplay: "1", rel: "0", playsinline: "1" });
+      if (start) params.set("start", String(start));
       box.replaceChildren(el("iframe", {
-        src: `https://www.youtube-nocookie.com/embed/${encodeURIComponent(v.id)}?autoplay=1&rel=0${start}`,
-        title: v.title, allow: "autoplay; encrypted-media; picture-in-picture", allowfullscreen: true, loading: "lazy",
+        src: `https://www.youtube.com/embed/${id}?${params}`,
+        title: v.title, allow: "autoplay; encrypted-media; picture-in-picture; fullscreen", allowfullscreen: true,
         referrerpolicy: "strict-origin-when-cross-origin",
       }));
+      caption.hidden = false;
     });
-    box.append(btn);
-    return box;
+    box.append(el("div", { class: "video__facade" },
+      el("span", { class: "video__title" }, v.title),
+      el("span", { class: "video__actions" },
+        el("a", { class: "btn btn--primary", href: watch, target: "_blank", rel: "noopener" }, "افتح في YouTube"),
+        here)));
+    const caption = el("figcaption", { class: "video__alt", hidden: true },
+      "إن طلب YouTube تسجيل الدخول فافتح المقطع هناك: ",
+      el("a", { href: watch, target: "_blank", rel: "noopener" }, "افتح في YouTube"));
+    return el("figure", { class: "video-item" }, box, caption);
   }
 
   // ── practice ─────────────────────────────────────────
