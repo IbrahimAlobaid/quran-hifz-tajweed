@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>مُعين الحفظ</title>
+  <meta name="description" content="استمع إلى الآيات بصوت القارئ الذي تختاره، وكرّرها، وتابع الكلمة المقروءة وأحكام التجويد.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preload" href="fonts/UthmanicHafs1Ver18.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/learn.css">
+  <script>
+    // Apply the saved theme before first paint to avoid a flash.
+    try { const s = JSON.parse(localStorage.getItem("hifz.v1") || "{}"); if (s.theme) document.documentElement.dataset.theme = s.theme; } catch {}
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2l3.6 5.2 6.2-1-1 6.2L30 16l-5.2 3.6 1 6.2-6.2-1L16 30l-3.6-5.2-6.2 1 1-6.2L2 16l5.2-3.6-1-6.2 6.2 1z" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="16" r="4.2" fill="currentColor"/></svg>
+      <div>
+        <h1 class="brand__name">مُعين الحفظ</h1>
+        <p class="brand__tag">استمع، كرّر، وتابع مع القارئ</p>
+      </div>
+    </div>
+    <nav class="mainnav" aria-label="أقسام الموقع">
+      <a href="#/" data-view="hifz">الحفظ والاستماع</a>
+      <a href="#/learn" data-view="learn">تعلّم التجويد</a>
+    </nav>
+    <button class="icon-btn" id="theme-btn" type="button" aria-label="تبديل الوضع الليلي" title="الوضع الليلي">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+    </button>
+  </header>
+
+  <div id="view-hifz">
+  <section class="session" aria-label="إعداد جلسة الحفظ">
+    <div class="field field--surah">
+      <label for="surah">السورة</label>
+      <select id="surah"></select>
+    </div>
+    <div class="field field--range">
+      <span class="field__label" id="range-label">الآيات</span>
+      <div class="range" role="group" aria-labelledby="range-label">
+        <label class="sr-only" for="from">من الآية</label>
+        <input id="from" type="number" min="1" inputmode="numeric">
+        <span aria-hidden="true">إلى</span>
+        <label class="sr-only" for="to">إلى الآية</label>
+        <input id="to" type="number" min="1" inputmode="numeric">
+      </div>
+    </div>
+    <div class="field field--reciter">
+      <label for="reciter">القارئ</label>
+      <select id="reciter"></select>
+    </div>
+    <div class="field">
+      <label for="ayah-repeat">تكرار كل آية</label>
+      <select id="ayah-repeat"></select>
+    </div>
+    <div class="field">
+      <label for="range-repeat">تكرار المقطع</label>
+      <select id="range-repeat"></select>
+    </div>
+    <div class="field">
+      <label for="gap">مهلة للترديد بعد الآية</label>
+      <select id="gap">
+        <option value="0">بلا مهلة</option>
+        <option value="2">ثانيتان</option>
+        <option value="4">٤ ثوانٍ</option>
+        <option value="x1">بطول الآية</option>
+        <option value="x1.5">مرة ونصف طول الآية</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="rate">السرعة</label>
+      <select id="rate">
+        <option value="0.6">٠٫٦×</option>
+        <option value="0.75">٠٫٧٥×</option>
+        <option value="0.9">٠٫٩×</option>
+        <option value="1" selected>١×</option>
+        <option value="1.15">١٫١٥×</option>
+        <option value="1.3">١٫٣×</option>
+      </select>
+    </div>
+  </section>
+
+  <main class="layout">
+    <article class="reader" aria-label="نص الآيات">
+      <div class="reader__bar">
+        <div class="seg-ctl" role="radiogroup" aria-label="طريقة عرض النص" id="hide-mode">
+          <button type="button" role="radio" data-v="show">النص كاملًا</button>
+          <button type="button" role="radio" data-v="reveal">يظهر مع التلاوة</button>
+          <button type="button" role="radio" data-v="first">أول كلمة فقط</button>
+          <button type="button" role="radio" data-v="hide">إخفاء</button>
+        </div>
+        <div class="reader__tools">
+          <label class="switch"><input type="checkbox" id="tj-toggle"><span>ألوان التجويد</span></label>
+          <label class="switch"><input type="checkbox" id="dim-toggle"><span>تعتيم بقية الآيات</span></label>
+          <div class="size-ctl" role="group" aria-label="حجم الخط">
+            <button type="button" class="icon-btn icon-btn--sm" id="font-dec" aria-label="تصغير الخط">−</button>
+            <button type="button" class="icon-btn icon-btn--sm" id="font-inc" aria-label="تكبير الخط">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="mushaf-wrap" id="mushaf-wrap">
+        <header class="surah-head" id="surah-head"></header>
+        <div class="mushaf" id="mushaf" aria-live="off"></div>
+        <div class="state" id="state" hidden></div>
+      </div>
+    </article>
+
+    <aside class="side" aria-label="أحكام التجويد">
+      <section class="panel" id="word-panel">
+        <h2 class="panel__title">تدقيق الكلمة</h2>
+        <div id="word-audit" class="word-audit">
+          <p class="hint">اختر كلمة من النص لعرض أحكامها وسبب كل حكم.</p>
+        </div>
+      </section>
+      <section class="panel">
+        <h2 class="panel__title">أحكام الآية <span id="ayah-badge" class="badge"></span></h2>
+        <div id="ayah-audit"></div>
+      </section>
+      <section class="panel">
+        <div class="panel__row">
+          <h2 class="panel__title">دليل الألوان</h2>
+          <div class="seg-ctl seg-ctl--sm" role="radiogroup" aria-label="نظام الألوان" id="palette">
+            <button type="button" role="radio" data-v="maarifa">مصحف التجويد</button>
+            <button type="button" role="radio" data-v="qcom">مفصّل</button>
+          </div>
+        </div>
+        <p class="hint">اضغط على حكم لإبرازه وحده في النص.</p>
+        <div id="legend" class="legend"></div>
+      </section>
+    </aside>
+  </main>
+
+  <footer class="player" aria-label="التحكم في التلاوة">
+    <div class="player__progress" id="progress" role="slider" tabindex="0" aria-label="موضع التلاوة في الآية" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div class="player__fill" id="progress-fill"></div>
+    </div>
+    <div class="player__row">
+      <div class="player__btns">
+        <button class="icon-btn" id="prev" type="button" aria-label="الآية السابقة" title="الآية السابقة (→)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14M18 5l-9 7 9 7z" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" transform="scale(-1,1) translate(-24,0)"/></svg>
+        </button>
+        <button class="play" id="play" type="button" aria-label="تشغيل" title="تشغيل / إيقاف (مسافة)">
+          <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z" fill="currentColor"/></svg>
+          <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></svg>
+        </button>
+        <button class="icon-btn" id="next" type="button" aria-label="الآية التالية" title="الآية التالية (←)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14M18 5l-9 7 9 7z" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="player__status" aria-live="polite">
+        <strong id="st-ayah">—</strong>
+        <span id="st-detail" class="muted"></span>
+      </div>
+      <div class="player__gap" id="gap-indicator" hidden>
+        <svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="15" class="ring-bg"/><circle cx="18" cy="18" r="15" class="ring" id="gap-ring"/></svg>
+        <span>ردّد الآن</span>
+      </div>
+      <div class="player__cache muted" id="st-cache"></div>
+    </div>
+  </footer>
+  </div>
+
+  <div id="view-learn" class="learn" hidden></div>
+
+  <audio id="audio" preload="auto"></audio>
+  <audio id="clip-audio" preload="none"></audio>
+  <audio id="wbw-audio" preload="none"></audio>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
