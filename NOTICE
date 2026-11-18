@@ -1,0 +1,17 @@
+Third-party material
+====================
+
+Third-party material in this repository keeps its own terms and is NOT
+covered by the MIT license above:
+
+  * frontend/data/learn/lessons, practice.json, cheatsheet.json
+      Lesson content from edriso/learn-tajweed — 0BSD.
+      Qur'anic words inside them come from the Quran.com API and remain
+      subject to the Quran Foundation terms.
+  * frontend/data/learn/mutun.json
+      Texts of Tuhfat al-Atfal and al-Muqaddimah al-Jazariyyah from Arabic
+      Wikisource, line-numbered by mwiederrecht/ghunna — MIT.
+  * frontend/fonts/UthmanicHafs1Ver18.woff2
+      KFGQPC Uthmanic Script Hafs — King Fahd Glorious Qur'an Printing Complex.
+  * Data fetched at runtime (Qur'an text, tajweed markup, recitations, word
+    timings) from Quran.com / QDC — subject to the Quran Foundation terms.
