@@ -158,13 +158,7 @@ export class MutPanel extends MutBase {
 }
 
 // ── the #/mut page ─────────────────────────────────────
-const TOC = [["how", "الطريقة"], ["rules", "قواعد الضبط"], ["browse", "تصفّح السور"], ["practice", "تدرّب"], ["sources", "المصادر"]];
-const CLASSIC = [
-  ["درة التنزيل وغرة التأويل", "الخطيب الإسكافي (ت ٤٢٠هـ)", "من أقدم كتب توجيه المتشابه اللفظي، يبيّن سبب اختلاف اللفظ في كل موضع."],
-  ["البرهان في توجيه متشابه القرآن", "محمود بن حمزة الكرماني (ت نحو ٥٠٥هـ)", "يمر على السور بالترتيب ويذكر لكل موضع نظيره وسبب الفرق."],
-  ["ملاك التأويل القاطع بذوي الإلحاد والتعطيل", "ابن الزبير الغرناطي (ت ٧٠٨هـ)", "أوسع كتب التوجيه."],
-  ["هداية المرتاب وغاية الحفاظ والطلاب في تبيين متشابه الكتاب", "علم الدين السخاوي (ت ٦٤٣هـ)", "منظومة لحفظ المتشابهات، رتّبها على حروف المعجم."],
-];
+const TOC = [["how", "الطريقة"], ["rules", "قواعد الضبط"], ["browse", "تصفّح السور"], ["practice", "تدرّب"]];
 
 export class MutView extends MutBase {
   constructor({ root, surahs }) {
@@ -189,7 +183,7 @@ export class MutView extends MutBase {
       el("header", { class: "learn-hero" },
         el("h1", {}, "المتشابهات اللفظية"),
         el("p", {}, `آيات تتفق في أكثر ألفاظها وتختلف في كلمة أو حرف أو ترتيب، فيخلط الحافظ بينها. هنا ${ar(index.total)} موضعًا في ${ar(Object.keys(index.surahs).length)} سورة، تُقارن كلمةً بكلمة، مع قواعد تضبط بها الفرق، وتدريب عليها.`)),
-      this.howSection(), this.rulesSection(), this.browseSection(), this.practiceSection(), this.sourcesSection()));
+      this.howSection(), this.rulesSection(), this.browseSection(), this.practiceSection()));
     const target = anchor && document.getElementById(`mut-${anchor}`);
     if (target) target.scrollIntoView({ block: "start" }); else window.scrollTo({ top: 0 });
   }
@@ -308,23 +302,6 @@ export class MutView extends MutBase {
         el("div", { class: "quiz__opts" }, buttons), why);
       return li;
     })), score);
-  }
-
-  sourcesSection() {
-    const src = this.index.source;
-    const a = (href, text) => el("a", { href, target: "_blank", rel: "noopener" }, text);
-    return this.section("sources", "المصادر", null,
-      el("h3", { class: "plan-sub" }, "بيانات المواضع"),
-      el("p", {}, a(src.url, "Quran Mutashabihat Data"), " لوقار أكرم (Waqar Akram)، مبنية على عمل القارئ إدريس العاصم رحمه الله وخبرة جامعها في الحفظ والتحفيظ. رخصتها CC0 (ملك عام). وهي تجمع المواضع التي يكثر أن يخلط بينها الحفّاظ، لا كل تشابه في القرآن."),
-      el("p", { class: "muted" }, "وفحصنا أيضًا: QUL من Tarteel (عبارات متكررة على مستوى الكلمة)، وQuranpedia، وUmmahAPI، وHifzLink، ومنصة «إحكام». اخترنا هذه البيانات لأن رخصتها تسمح بنشرها، ولأنها من عمل محفّظين، وتعمل دون اتصال."),
-      el("h3", { class: "plan-sub" }, "المقارنة والتلوين"),
-      el("p", {}, "يقارن الموقع كلمات الموضعين آليًا، ولا يغيّر شيئًا من نص المصحف. ويتجاهل الفروق التي يصنعها اتصال الكلمة بما بعدها (كشدة الإدغام أو السكون المحذوف)، لأنها ليست فرقًا في اللفظ المحفوظ. أما الضوابط فمن كتابة أهل العلم، ولا يولّد الموقع ضابطًا من عنده."),
-      el("h3", { class: "plan-sub" }, "للاستزادة"),
-      el("ul", { class: "sources" },
-        el("li", {}, a("https://www.alukah.net/sharia/0/145909/", "١٠ قواعد مهمة في ضبط الآيات المتشابهة"), "، عبد الشكور معلم عبد فارح (الألوكة)."),
-        el("li", {}, a("https://www.alukah.net/sharia/0/137988/", "١٠٠ فائدة في ضبط الآيات المتشابهة"), "، للمؤلف نفسه."),
-        el("li", {}, "«القواعد الأربعينية في ضبط المتشابهات القرآنية» لدريد الموصلي، و«الضبط بالتقعيد للمتشابه اللفظي في القرآن المجيد» لفواز الحنين."),
-        ...CLASSIC.map(([t, by, what]) => el("li", {}, el("b", {}, t), `، ${by}. `, el("span", { class: "muted" }, what)))));
   }
 }
 

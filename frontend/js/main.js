@@ -8,11 +8,13 @@ import { ar, el } from "./util.js";
 import { MutPanel, MutView } from "./mutashabihat.js";
 import { PlansView } from "./plans.js";
 import { MushafView } from "./view.js";
+import { mushafIndex } from "./mushaf-meta.js";
+import { Viewer } from "./viewer.js";
 
 const PAGES = 604;
 const $ = (id) => document.getElementById(id);
 const ui = {
-  surah: $("surah"), from: $("from"), to: $("to"), reciter: $("reciter"), page: $("page"),
+  surah: $("surah"), juz: $("juz"), from: $("from"), to: $("to"), reciter: $("reciter"), page: $("page"),
   unit: $("unit"), rangeCtl: $("range-ctl"), pageCtl: $("page-ctl"), pageNav: $("page-nav"), pageNavLabel: $("page-nav-label"),
   ayahRepeat: $("ayah-repeat"), rangeRepeat: $("range-repeat"), gap: $("gap"), rate: $("rate"),
   mushaf: $("mushaf"), state: $("state"), play: $("play"), prev: $("prev"), next: $("next"),
@@ -24,14 +26,14 @@ const ui = {
 const audio = $("audio");
 const wbwAudio = $("wbw-audio");
 const player = new Player(audio);
-const view = new MushafView({ root: ui.mushaf, head: $("surah-head"), wrap: $("mushaf-wrap") });
+const view = new MushafView({ root: ui.mushaf, head: $("surah-head"), wrap: $("mushaf-frame"), foot: $("page-num") });
 
 // The selection is one or more segments {s, from, to}: one for "ayahs", up to
 // three for a mushaf page that holds the end of a surah and the next ones.
 // The player works on one segment at a time (`act`) and moves on at its end.
 let surahs = [], segs = [], act = 0, pagePass = 1;
 let panel = null, tafsir = null, learn = null, plans = null, muts = null, mutView = null, loadToken = 0, actToken = 0;
-let setHideUI = null, setUnitUI = null;
+let setHideUI = null, setUnitUI = null, viewer = null;
 const isPage = () => settings.unit === "page";
 const cur = () => segs[act];
 
@@ -103,8 +105,21 @@ function syncUnitControls() {
   const page = isPage();
   ui.rangeCtl.hidden = page;
   ui.pageCtl.hidden = !page;
-  ui.pageNav.hidden = !page;
+  ui.juz.closest(".field").hidden = !page;
+  ui.surah.closest(".field").hidden = page;
 }
+
+/** The viewer bar's title, the juz picker and the thumbnail strip follow the current ayah. */
+function updateViewer() {
+  const seg = cur();
+  if (!seg || !viewer) return;
+  const a = view.ayahData(seg.s.id, player.cur);
+  const page = isPage() ? settings.page : a?.page;
+  if (a?.juz) ui.juz.value = a.juz;
+  viewer.update({ surahName: seg.s.name, page, juz: a?.juz, ayah: player.cur });
+}
+
+const tajweedOn = () => settings.tajweed && settings.showTajweed;
 
 // ── loading ────────────────────────────────────────────
 /** @param at {s, n} — ayah to keep current if it is in the new selection */
@@ -137,6 +152,7 @@ async function loadSelection({ at = null } = {}) {
     pagePass = 1;
     view.render(segs, { layout: isPage() ? "page" : "flow", page: settings.page });
     view.setMode(settings.hideMode);
+    viewer.paintMarks();
     panel.renderLegend(countRules(segs));
     if (panel.focused) view.focusRule(panel.focused);
     tafsir.setSelection(segs);
@@ -188,6 +204,7 @@ function onAyahChanged() {
   panel.showAyah(view.ayahData(s, player.cur), (n, p) => pickWord(s, n, p));
   tafsir.setCurrent(s, player.cur);
   muts.setCurrent(s, player.cur);
+  updateViewer();
 }
 
 function countRules(list) {
@@ -282,9 +299,19 @@ player.addEventListener("gap", ({ detail }) => {
   ring.style.strokeDashoffset = "94.25";
 });
 
-view.addEventListener("word", ({ detail }) => pickWord(detail.s, detail.n, detail.p));
-view.addEventListener("playword", ({ detail }) => playFrom(detail.s, detail.n, detail.p));
-view.addEventListener("ayahclick", ({ detail }) => playFrom(detail.s, detail.n));
+view.addEventListener("word", ({ detail }) => {
+  if (viewer.tapWord(detail.s, detail.n, detail.p)) return; // the pen marks words instead
+  pickWord(detail.s, detail.n, detail.p);
+});
+view.addEventListener("playword", ({ detail }) => {
+  if (viewer.penOn) return;
+  if (settings.withReciter) playFrom(detail.s, detail.n, detail.p);
+  else pickWord(detail.s, detail.n, detail.p);
+});
+view.addEventListener("ayahclick", ({ detail }) => {
+  if (settings.withReciter) return playFrom(detail.s, detail.n);
+  goToAyah(detail.s, detail.n);
+});
 
 ui.play.addEventListener("click", () => player.toggle());
 function step(dir) {
@@ -315,6 +342,7 @@ ui.surah.addEventListener("change", () => {
 });
 for (const inp of [ui.from, ui.to]) inp.addEventListener("change", () => { player.stop(); loadSelection(); });
 ui.page.addEventListener("change", () => goPage(ui.page.value));
+ui.juz.addEventListener("change", async () => goPage((await mushafIndex()).juz[+ui.juz.value - 1]));
 $("page-prev").addEventListener("click", () => goPage(settings.page - 1));
 $("page-next").addEventListener("click", () => goPage(settings.page + 1));
 ui.pageNav.addEventListener("click", (e) => {
@@ -335,7 +363,7 @@ ui.rangeRepeat.addEventListener("change", () => {
 ui.gap.addEventListener("change", () => { save({ gap: ui.gap.value }); player.setOptions({ gap: settings.gap }); });
 ui.rate.addEventListener("change", () => { save({ rate: +ui.rate.value }); player.setOptions({ rate: settings.rate }); });
 
-ui.tj.addEventListener("change", () => { save({ tajweed: ui.tj.checked }); ui.mushaf.classList.toggle("tj-on", ui.tj.checked); });
+ui.tj.addEventListener("change", () => { save({ tajweed: ui.tj.checked }); ui.mushaf.classList.toggle("tj-on", tajweedOn()); });
 ui.dim.addEventListener("change", () => { save({ dim: ui.dim.checked }); ui.mushaf.classList.toggle("dim-others", ui.dim.checked); });
 
 function setFont(px) {
@@ -366,14 +394,16 @@ $("theme-btn").addEventListener("click", () => {
   document.documentElement.dataset.theme = theme;
   save({ theme });
   showTheme();
+  viewer?.showTheme();
   panel.applyColors();
 });
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { panel?.applyColors(); showTheme(); });
 
 document.addEventListener("keydown", (e) => {
   if (document.body.classList.contains("in-learn")) return; // learn and plans pages
+  if (document.body.classList.contains("grid-open") || document.querySelector("dialog[open]")) return;
   if (e.target.closest("input, select, textarea") || e.ctrlKey || e.metaKey || e.altKey) return;
-  if (e.code === "Space" && !e.target.closest(".w, button")) { e.preventDefault(); player.toggle(); }
+  if (e.code === "Space" && !e.target.closest(".w, button")) { if (settings.withReciter) { e.preventDefault(); player.toggle(); } }
   else if (e.key === "ArrowLeft") { e.preventDefault(); step(1); }   // RTL: left = forward
   else if (e.key === "ArrowRight") { e.preventDefault(); step(-1); }
   else if (e.key === "PageDown" && isPage()) { e.preventDefault(); goPage(settings.page + 1); }
@@ -408,7 +438,6 @@ function setSideTab(v) {
   $("side-tajweed").hidden = v !== "tajweed";
   $("tafsir-panel").hidden = v !== "tafsir";
   $("mut-panel").hidden = v !== "mut";
-  document.querySelector(".layout").classList.toggle("is-tafsir", v !== "tajweed");
   tafsir.setActive(v === "tafsir");
   muts.setActive(v === "mut");
 }
@@ -456,6 +485,7 @@ function route() {
   $("view-plan").hidden = page !== "plan";
   $("view-mut").hidden = page !== "mut";
   document.body.classList.toggle("in-learn", page !== "hifz");
+  document.body.classList.toggle("in-hifz", page === "hifz"); // the reading page has its own bar
   document.querySelectorAll(".mainnav a").forEach((a) =>
     a.setAttribute("aria-current", String(a.dataset.view === page ? "page" : "false")));
   if (page !== "hifz") player.pause();
@@ -479,7 +509,7 @@ async function boot() {
   ui.rate.value = settings.rate;
   ui.tj.checked = settings.tajweed;
   ui.dim.checked = settings.dim;
-  ui.mushaf.classList.toggle("tj-on", settings.tajweed);
+  ui.mushaf.classList.toggle("tj-on", tajweedOn());
   ui.mushaf.classList.toggle("dim-others", settings.dim);
   if (settings.qSize) document.documentElement.style.setProperty("--q-size", `${settings.qSize}px`);
   player.setOptions({ ayahRepeat: settings.ayahRepeat, rangeRepeat: settings.rangeRepeat, gap: settings.gap, rate: settings.rate });
@@ -497,6 +527,7 @@ async function boot() {
     ui.from.value = settings.from;
     ui.to.value = settings.to;
     ui.page.value = settings.page;
+    ui.juz.replaceChildren(...Array.from({ length: 30 }, (_, i) => el("option", { value: i + 1 }, `الجزء ${ar(i + 1)}`)));
 
     panel = new TajweedPanel({
       catalog, legend: $("legend"), wordBox: $("word-audit"), ayahBox: $("ayah-audit"), ayahBadge: $("ayah-badge"),
@@ -512,6 +543,44 @@ async function boot() {
       state: { source: settings.tafsir, scope: settings.tafsirScope }, onChange: save,
     });
     muts = new MutPanel({ root: $("mut-panel"), tab: $("tab-mut"), surahs });
+    viewer = new Viewer({
+      settings, save, surahs,
+      goPage: (P) => {
+        if (isPage()) return goPage(P);
+        save({ unit: "page", page: clampPage(P) }); // from an ayah range to that page
+        setUnitUI?.("page");
+        player.stop();
+        loadSelection();
+      },
+      openSurah: (id) => {
+        const meta = surahs.find((m) => m.id === id);
+        if (isPage()) return goPage(meta.pages[0]);
+        ui.surah.value = id;
+        ui.surah.dispatchEvent(new Event("change"));
+      },
+      words: () => view.words,
+      sheetTab: (v) => $(`tab-${v}`).click(),
+      onSettings: (key) => {
+        if (key === "showTajweed") ui.mushaf.classList.toggle("tj-on", tajweedOn());
+        if (key === "withReciter" && !settings.withReciter) player.stop();
+        const tabOk = { tajweed: settings.showTajweed, tafsir: settings.showTafsir, mut: settings.showMut };
+        if (!tabOk[settings.sideTab]) {
+          const first = Object.keys(tabOk).find((k) => tabOk[k]);
+          if (first) $(`tab-${first}`).click();
+        }
+      },
+    });
+    viewer.showTheme();
+    const syncHideBtn = () => $("v-hide").setAttribute("aria-pressed", String(settings.hideMode !== "show"));
+    $("v-hide").addEventListener("click", () => {
+      const v = settings.hideMode === "show" ? "first" : "show";
+      save({ hideMode: v });
+      setHideUI(v);
+      view.setMode(v);
+      syncHideBtn();
+    });
+    ui.hideMode.addEventListener("click", syncHideBtn);
+    syncHideBtn();
     bindSegmented(document.querySelector(".side-tabs"), settings.sideTab, setSideTab, "aria-selected");
     setSideTab(settings.sideTab);
 

@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="css/plans.css">
   <link rel="stylesheet" href="css/mutashabihat.css">
   <link rel="stylesheet" href="css/lawh.css">
+  <link rel="stylesheet" href="css/viewer.css">
   <script>
     // Apply the saved theme before first paint to avoid a flash.
     try { const s = JSON.parse(localStorage.getItem("hifz.v1") || "{}"); if (s.theme) document.documentElement.dataset.theme = s.theme; } catch {}
@@ -46,8 +47,41 @@
     </button>
   </header>
 
-  <div id="view-hifz">
+  <div id="view-hifz" class="viewer">
+  <header class="vbar" aria-label="أدوات القراءة">
+    <button type="button" class="vbtn" id="v-grid" aria-label="صفحات المصحف حسب الأجزاء" title="صفحات المصحف"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+    <div class="vbar__title">
+      <strong id="v-title">—</strong>
+      <span id="v-sub" class="muted"></span>
+    </div>
+    <div class="vbar__tools">
+      <button type="button" class="vbtn" id="v-hide" aria-pressed="false" aria-label="إخفاء النص للتسميع" title="إخفاء النص للتسميع (تبقى أول كلمة)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 3 18 18"/><path d="M10.6 6.1A9.8 9.8 0 0 1 12 6c5 0 8.5 4.5 9.5 6a17 17 0 0 1-3.1 3.5"/><path d="M6.6 7.6C4.6 8.9 3.2 10.8 2.5 12c1 1.5 4.5 6 9.5 6 1.6 0 3-.4 4.2-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg></button>
+      <button type="button" class="vbtn" id="v-pen" aria-pressed="false" aria-label="القلم: علّم الكلمات التي أخطأت فيها" title="القلم"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg></button>
+      <button type="button" class="vbtn" id="v-opts" aria-pressed="false" aria-label="خيارات التلاوة" title="خيارات التلاوة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10"/><path d="M18 7h2"/><circle cx="16" cy="7" r="2"/><path d="M4 17h4"/><path d="M12 17h8"/><circle cx="10" cy="17" r="2"/></svg></button>
+      <button type="button" class="vbtn" id="v-more" aria-haspopup="menu" aria-expanded="false" aria-label="المزيد" title="المزيد"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5.5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="18.5" r="1.2"/></svg></button>
+      <div class="vmenu" id="v-menu" role="menu" hidden>
+        <a role="menuitem" href="#/plan">خطط الحفظ</a>
+        <a role="menuitem" href="#/mut">المتشابهات</a>
+        <a role="menuitem" href="#/learn">تعلّم التجويد</a>
+        <hr>
+        <button type="button" role="menuitem" id="v-theme">المظهر: <span id="v-theme-name"></span></button>
+        <button type="button" role="menuitem" id="v-settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3"/><path d="M12 18.5v3"/><path d="m4.6 4.6 2.1 2.1"/><path d="m17.3 17.3 2.1 2.1"/><path d="M2.5 12h3"/><path d="M18.5 12h3"/><path d="m4.6 19.4 2.1-2.1"/><path d="m17.3 6.7 2.1-2.1"/></svg> الإعدادات</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="pen-bar" id="pen-bar" hidden>
+    <span>القلم: اضغط على كلمة أخطأت فيها لتضع تحتها خطًا، واضغط مرة أخرى لتمسحه.</span>
+    <button type="button" class="btn" id="pen-clear">مسح علامات الصفحة <span id="pen-count"></span></button>
+    <button type="button" class="btn btn--primary" id="pen-done">إنهاء</button>
+  </div>
+
+  <div class="detail" id="detail" hidden>
   <section class="session" aria-label="إعداد جلسة الحفظ">
+    <div class="field field--juz">
+      <label for="juz">الجزء</label>
+      <select id="juz"></select>
+    </div>
     <div class="field field--surah">
       <label for="surah">السورة</label>
       <select id="surah"></select>
@@ -106,9 +140,8 @@
     </div>
   </section>
 
-  <main class="layout">
-    <article class="reader" aria-label="نص الآيات">
-      <div class="reader__bar">
+    <div class="reader__bar">
+
         <div class="seg-ctl" role="radiogroup" aria-label="طريقة عرض النص" id="hide-mode">
           <button type="button" role="radio" data-v="show">النص كاملًا</button>
           <button type="button" role="radio" data-v="reveal">يظهر مع التلاوة</button>
@@ -124,53 +157,36 @@
           </div>
         </div>
       </div>
+  </div>
 
-      <div class="mushaf-wrap" id="mushaf-wrap">
+  <main class="stage" id="stage">
+    <div class="mushaf-wrap" id="mushaf-wrap">
+      <div class="mushaf-frame" id="mushaf-frame">
         <header class="surah-head" id="surah-head"></header>
         <div class="mushaf" id="mushaf" aria-live="off"></div>
         <div class="state" id="state" hidden></div>
-        <nav class="page-nav" id="page-nav" aria-label="تنقّل الصفحات" hidden>
-          <button type="button" class="btn" data-step="-1">الصفحة السابقة</button>
-          <span class="muted" id="page-nav-label"></span>
-          <button type="button" class="btn" data-step="1">الصفحة التالية</button>
-        </nav>
+        <p class="page-num" id="page-num"></p>
       </div>
-    </article>
-
-    <aside class="side" id="side" aria-label="التجويد والتفسير">
-      <div class="side-tabs" role="tablist" aria-label="اللوحة الجانبية">
-        <button type="button" role="tab" id="tab-tajweed" aria-controls="side-tajweed" data-v="tajweed">التجويد</button>
-        <button type="button" role="tab" id="tab-tafsir" aria-controls="tafsir-panel" data-v="tafsir">التفسير</button>
-        <button type="button" role="tab" id="tab-mut" aria-controls="mut-panel" data-v="mut">المتشابهات</button>
-      </div>
-      <div id="side-tajweed" class="side-group" role="tabpanel" aria-labelledby="tab-tajweed">
-      <section class="panel" id="word-panel">
-        <h2 class="panel__title">تدقيق الكلمة</h2>
-        <div id="word-audit" class="word-audit">
-          <p class="hint">اختر كلمة من النص لعرض أحكامها وسبب كل حكم.</p>
-        </div>
-      </section>
-      <section class="panel">
-        <h2 class="panel__title">أحكام الآية <span id="ayah-badge" class="badge"></span></h2>
-        <div id="ayah-audit"></div>
-      </section>
-      <section class="panel">
-        <div class="panel__row">
-          <h2 class="panel__title">دليل الألوان</h2>
-          <div class="seg-ctl seg-ctl--sm" role="radiogroup" aria-label="نظام الألوان" id="palette">
-            <button type="button" role="radio" data-v="maarifa">مصحف التجويد</button>
-            <button type="button" role="radio" data-v="qcom">مفصّل</button>
-          </div>
-        </div>
-        <p class="hint">اضغط على حكم لإبرازه وحده في النص.</p>
-        <div id="legend" class="legend"></div>
-      </section>
-      </div>
-      <section class="panel tafsir" id="tafsir-panel" role="tabpanel" aria-labelledby="tab-tafsir" hidden></section>
-      <section class="panel mut-panel" id="mut-panel" role="tabpanel" aria-labelledby="tab-mut" hidden></section>
-    </aside>
+      <nav class="page-nav" id="page-nav" aria-label="تنقّل الصفحات" hidden>
+        <button type="button" class="btn" data-step="-1">الصفحة السابقة</button>
+        <span class="muted" id="page-nav-label"></span>
+        <button type="button" class="btn" data-step="1">الصفحة التالية</button>
+      </nav>
+    </div>
   </main>
 
+  <button type="button" class="fab" id="fab-tj" aria-label="أحكام التجويد في هذه الآية" title="أحكام التجويد في هذه الآية"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h1.5"/><path d="M8 8.5v7"/><path d="M12 5v14"/><path d="M16 9v6"/><path d="M19.5 11v2"/></svg><span>التجويد</span></button>
+
+  <div class="dock" id="dock">
+    <button type="button" class="peek" id="peek" aria-controls="sheet" aria-expanded="false">
+      <span class="peek__grip" aria-hidden="true"></span>
+      <span id="peek-label">التجويد · التفسير · المتشابهات</span>
+    </button>
+    <nav class="pager-bar" aria-label="تنقّل الصفحات">
+      <button type="button" class="btn pg-btn" id="pg-prev" aria-label="الصفحة السابقة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><span>السابقة</span></button>
+      <span class="pg-label muted" id="pg-label"></span>
+      <button type="button" class="btn pg-btn" id="pg-next" aria-label="الصفحة التالية"><span>التالية</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
+    </nav>
   <footer class="player" aria-label="التحكم في التلاوة">
     <div class="player__progress" id="progress" role="slider" tabindex="0" aria-label="موضع التلاوة في الآية" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
       <div class="player__fill" id="progress-fill"></div>
@@ -199,6 +215,74 @@
       <div class="player__cache muted" id="st-cache"></div>
     </div>
   </footer>
+  </div>
+
+  <section class="sheet" id="sheet" aria-label="التجويد والتفسير والمتشابهات" data-state="closed">
+    <div class="sheet__head" id="sheet-head">
+      <span class="sheet__grip" aria-hidden="true"></span>
+      <div class="side-tabs" role="tablist" aria-label="اللوحة">
+        <button type="button" role="tab" id="tab-tajweed" aria-controls="side-tajweed" data-v="tajweed">التجويد</button>
+        <button type="button" role="tab" id="tab-tafsir" aria-controls="tafsir-panel" data-v="tafsir">التفسير</button>
+        <button type="button" role="tab" id="tab-mut" aria-controls="mut-panel" data-v="mut">المتشابهات</button>
+      </div>
+      <button type="button" class="vbtn sheet__close" id="sheet-close" aria-label="إغلاق اللوحة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6 6 18"/></svg></button>
+    </div>
+    <div class="sheet__body side" id="side">
+      <div id="side-tajweed" class="side-group" role="tabpanel" aria-labelledby="tab-tajweed">
+      <section class="panel" id="word-panel">
+        <h2 class="panel__title">تدقيق الكلمة</h2>
+        <div id="word-audit" class="word-audit">
+          <p class="hint">اختر كلمة من النص لعرض أحكامها وسبب كل حكم.</p>
+        </div>
+      </section>
+      <section class="panel">
+        <h2 class="panel__title">أحكام الآية <span id="ayah-badge" class="badge"></span></h2>
+        <div id="ayah-audit"></div>
+      </section>
+      <section class="panel">
+        <div class="panel__row">
+          <h2 class="panel__title">دليل الألوان</h2>
+          <div class="seg-ctl seg-ctl--sm" role="radiogroup" aria-label="نظام الألوان" id="palette">
+            <button type="button" role="radio" data-v="maarifa">مصحف التجويد</button>
+            <button type="button" role="radio" data-v="qcom">مفصّل</button>
+          </div>
+        </div>
+        <p class="hint">اضغط على حكم لإبرازه وحده في النص.</p>
+        <div id="legend" class="legend"></div>
+      </section>
+      </div>
+      <section class="panel tafsir" id="tafsir-panel" role="tabpanel" aria-labelledby="tab-tafsir" hidden></section>
+      <section class="panel mut-panel" id="mut-panel" role="tabpanel" aria-labelledby="tab-mut" hidden></section>
+    </div>
+  </section>
+
+  <div class="pagegrid" id="pagegrid" role="dialog" aria-modal="true" aria-label="صفحات المصحف" hidden>
+    <header class="pagegrid__bar">
+      <button type="button" class="vbtn" id="grid-close" aria-label="رجوع إلى الصفحة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+      <strong>المصحف</strong>
+      <div class="seg-ctl" role="radiogroup" aria-label="التصفّح" id="grid-by">
+        <button type="button" role="radio" data-v="juz">الأجزاء</button>
+        <button type="button" role="radio" data-v="surah">السور</button>
+      </div>
+    </header>
+    <nav class="pagegrid__links" aria-label="أقسام الموقع">
+      <a href="#/plan">خطط الحفظ</a><a href="#/mut">المتشابهات</a><a href="#/learn">تعلّم التجويد</a>
+    </nav>
+    <div class="pagegrid__body" id="grid-body"></div>
+  </div>
+
+  <dialog class="settings" id="settings-dlg" aria-labelledby="settings-title">
+    <form method="dialog">
+      <h2 id="settings-title">الإعدادات</h2>
+      <p class="muted">تُحفظ على هذا الجهاز فقط.</p>
+      <label class="setrow"><span><b>التفسير</b><small>تبويب التفسير في اللوحة السفلية</small></span><input type="checkbox" data-set="showTafsir"></label>
+      <label class="setrow"><span><b>التجويد</b><small>ألوان الأحكام، وزر التجويد ولوحته</small></span><input type="checkbox" data-set="showTajweed"></label>
+      <label class="setrow"><span><b>المتشابهات</b><small>تظليل رقم الآية التي لها نظائر، وتبويبها</small></span><input type="checkbox" data-set="showMut"></label>
+      <label class="setrow"><span><b>مع قارئ</b><small>المشغّل والتكرار. أطفئه للقراءة الصامتة</small></span><input type="checkbox" data-set="withReciter"></label>
+      <label class="setrow"><span><b>خيارات مفصّلة</b><small>اختيار المقطع والقارئ والتكرار والمهلة والسرعة</small></span><input type="checkbox" data-set="detailed"></label>
+      <button class="btn btn--primary" value="done">تم</button>
+    </form>
+  </dialog>
   </div>
 
   <div id="view-plan" class="learn" hidden></div>
