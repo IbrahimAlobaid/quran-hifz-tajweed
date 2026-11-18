@@ -56,11 +56,19 @@ def sanitize_timings(raw: dict) -> dict:
             segs.append([pos, a, b])
         segs.sort(key=lambda x: x[1])
         key = vt["verse_key"]
+        start, end = vt.get("timestamp_from"), vt.get("timestamp_to")
+        # Some upstream verses lack bounds (e.g. 168/101:3); derive them from the words.
+        if start is None and segs:
+            start = segs[0][1]
+        if end is None and segs:
+            end = max(s[2] for s in segs)
+        if start is None or end is None:
+            continue
         verses.append({
             "key": key,
             "n": int(key.split(":")[1]),
-            "from": int(round(float(vt["timestamp_from"]))),
-            "to": int(round(float(vt["timestamp_to"]))),
+            "from": int(round(float(start))),
+            "to": int(round(float(end))),
             "segs": segs,
         })
     verses.sort(key=lambda v: v["n"])

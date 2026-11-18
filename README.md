@@ -335,6 +335,7 @@ python scripts/import_learn.py --lessons ../learn-tajweed --ghunna ../ghunna
 │   │       └── cache.py             التخزين وعميل HTTP
 │   ├── scripts/
 │   │   ├── prefetch.py              تجهيز العمل دون اتصال
+│   │   ├── export_static.py         تصدير الموقع ملفات ثابتة (dist/) للاستضافة المجانية
 │   │   └── import_learn.py          استيراد الدروس والمتون
 │   ├── tests/                       pytest
 │   └── requirements.txt
@@ -374,12 +375,54 @@ python -m pytest -q
 
 **لا يحتاج المشروع إلى GPU.** الخادم لا يشغّل أي نموذج، بل يجلب البيانات ويحفظها.
 
+### الطريقة الموصى بها: Cloudflare Pages (مجاني ويعمل دائمًا)
+
+يمكن تصدير الموقع كله ملفاتٍ ثابتة لا تحتاج خادمًا:
+
+- **ما يُصدَّر:** نص السور الـ١١٤ وأحكامها، وتوقيت الكلمات لكل القرّاء الـ١٤، والدروس.
+- **الصوت:** لا يُصدَّر، بل يطلبه المتصفح من خوادم Quran.com مباشرة.
+- **الحجم:** نحو ٥٣ MB في ١٬٧٦٦ ملفًا، وأكبر ملف ١٫٩ MB.
+- **حدود Cloudflare Pages المجانية:** ٢٠٬٠٠٠ ملف، و٢٥ MB للملف الواحد.
+
+```bash
+cd backend
+python scripts/export_static.py                  # يُنشئ مجلد dist/ (نحو دقيقة ونصف)
+python scripts/export_static.py --reciters 7,12  # بناء أصغر بقرّاء محددين
+```
+
+**ما الذي يتغيّر في الوضع الثابت؟** يغيّر السكربت سطرًا واحدًا في `dist/index.html`: يجعل `<meta name="hifz-mode">` قيمته `static`. بعدها تقرأ الواجهة من `data/static/` بدل `/api`. أما التشغيل المحلي بالخادم فيبقى كما هو.
+
+#### النشر التلقائي من GitHub (مرة واحدة)
+
+1. في لوحة Cloudflare اختر **Workers & Pages ← Create ← Pages ← Connect to Git**.
+2. اختر هذا الريبو، ثم اضبط الإعدادات:
+
+   | الإعداد | القيمة |
+   |---|---|
+   | Production branch | `main` |
+   | Build command | `pip install -r backend/requirements.txt && python backend/scripts/export_static.py` |
+   | Build output directory | `dist` |
+   | Environment variable | `PYTHON_VERSION` = `3.12` |
+
+3. اضغط **Save and Deploy**.
+
+بعدها كل `push` إلى `main` يعيد بناء الموقع ونشره تلقائيًا. والموقع يعمل على `https://<اسم-المشروع>.pages.dev`، ويمكن ربط نطاق خاص به.
+
+#### أو النشر اليدوي من جهازك
+
+```bash
+cd backend && python scripts/export_static.py && cd ..
+npx wrangler pages deploy dist --project-name quran-hifz-tajweed
+```
+
+### بدائل
+
 | الطريقة | التكلفة | ملاحظات |
 |---|---|---|
-| Hugging Face Spaces (Docker، معالج عادي) | مجاني | يعمل كما هو، وينام بعد فترة خمول، والتخزين مؤقت |
+| GitHub Pages أو Netlify | مجاني | ارفع مجلد `dist/` نفسه |
+| Hugging Face Spaces (Docker، معالج عادي) | مجاني | يعمل الخادم كما هو، وينام بعد فترة خمول، والتخزين مؤقت |
 | Render، Google Cloud Run | مجاني ضمن الحصص | ينام عند الخمول، والتخزين مؤقت |
 | خادم صغير (Hetzner وأمثاله) | نحو ٤ يورو شهريًا | تخزين دائم وتحكم كامل |
-| موقع ثابت (Cloudflare Pages) | مجاني | يحتاج تصدير البيانات ملفات ثابتة، وطلب الصوت من المصدر مباشرة |
 
 > **قبل النشر العام:** راجع [شروط Quran Foundation](https://api-docs.quran.foundation/) بخصوص إعادة توزيع بياناتهم وحفظها طويلًا، أو سجّل تطبيقًا لديهم. الاستخدام الشخصي على جهازك لا إشكال فيه.
 
@@ -416,7 +459,6 @@ python -m pytest -q
   - تتبع على مستوى الحرف.
   - قرّاء ليس لهم توقيت منشور.
 - **متابعة الحفظ بالتكرار المتباعد** (spaced repetition) للمقاطع المحفوظة.
-- **تصدير ثابت** للنشر المجاني على Cloudflare Pages.
 - **روايات أخرى** غير حفص.
 
 ---
@@ -450,5 +492,7 @@ python -m pytest -q
 cd backend && pip install -r requirements.txt && python -m uvicorn app.main:app --port 8000
 ```
 Then open http://127.0.0.1:8000. Tests: `python -m pytest -q`.
+
+**Free hosting:** `python backend/scripts/export_static.py` writes a fully static build to `dist/` (~53 MB; audio streams from the Quran.com CDNs). On Cloudflare Pages, use the build command `pip install -r backend/requirements.txt && python backend/scripts/export_static.py`, output directory `dist`, and `PYTHON_VERSION=3.12`.
 
 **License:** code under [MIT](LICENSE); third-party lessons, texts, font and Quran.com data keep their own terms (listed in [`NOTICE`](NOTICE)).

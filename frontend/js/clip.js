@@ -51,7 +51,7 @@ export class ClipPlayer extends EventTarget {
       if (!verse) throw new Error("no verse");
       const [start, end] = ClipPlayer.range(verse, words?.[0], words?.[1]);
       this.end = end + TAIL_MS;
-      const src = `${t.audio}?cache=0`;
+      const src = t.stream;
       if (this.audio.getAttribute("src") !== src) this.audio.src = src;
       await this._seek(start / 1000);
       if (this.owner !== owner) return;

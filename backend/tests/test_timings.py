@@ -15,3 +15,13 @@ def test_sanitize_drops_malformed_and_sorts():
     assert [v["n"] for v in t["verses"]] == [1, 3]
     assert t["verses"][1]["segs"] == [[1, 11615, 12855], [2, 12855, 16180]]
     assert t["duration"] == 46000
+
+
+def test_missing_verse_bounds_are_derived_from_words():
+    raw = {"audio_url": "x", "duration": 1, "verse_timings": [
+        {"verse_key": "101:3", "timestamp_from": None, "timestamp_to": None,
+         "segments": [[2, 10205, 11629], [1, 8117, 10205]]},
+        {"verse_key": "101:4", "timestamp_from": None, "timestamp_to": None, "segments": []},
+    ]}
+    t = sanitize_timings(raw)
+    assert [(v["n"], v["from"], v["to"]) for v in t["verses"]] == [(3, 8117, 11629)]
