@@ -1,7 +1,9 @@
 const KEY = "hifz.v1";
 
 const DEFAULTS = {
+  unit: "ayahs",     // "ayahs" (surah + range) | "page" (a full mushaf page)
   surah: 78, from: 1, to: 5,
+  page: 582,
   rid: 7,
   ayahRepeat: 3,     // 0 = ∞
   rangeRepeat: 1,    // 0 = ∞
@@ -13,6 +15,9 @@ const DEFAULTS = {
   dim: true,
   qSize: null,
   theme: null,
+  sideTab: "tajweed", // "tajweed" | "tafsir"
+  tafsir: "muyassar",
+  tafsirScope: "ayah", // "ayah" | "all"
 };
 
 function load() {

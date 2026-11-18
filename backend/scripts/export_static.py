@@ -62,7 +62,7 @@ async def main() -> None:
     # 1) the UI
     if out.exists():
         shutil.rmtree(out)
-    shutil.copytree(get_settings().frontend_dir, out)
+    shutil.copytree(get_settings().frontend_dir, out, ignore=shutil.ignore_patterns("tests", "package.json"))
     index = out / "index.html"
     html = index.read_text(encoding="utf-8")
     html, n = re.subn(r'(<meta name="hifz-mode" content=")server(")', r"\1static\2", html)

@@ -6,7 +6,7 @@ from app.config import get_settings
 from app.services.cache import cached_json, get_json
 from app.services.tajweed_audit import annotate_word, parse_markup, waqf_in
 
-SCHEMA_VERSION = "v1"
+SCHEMA_VERSION = "v2"  # v2: mushaf page/line per word (page layout)
 
 
 async def chapters() -> list[dict]:
@@ -53,7 +53,8 @@ def build_surah(meta: dict, verses: list[dict]) -> dict:
     ayahs: list[dict] = []
     for v in verses:
         words = [w for w in v["words"] if w["char_type_name"] == "word"]
-        end = next((w["text_uthmani"] for w in v["words"] if w["char_type_name"] == "end"), "")
+        end_w = next((w for w in v["words"] if w["char_type_name"] == "end"), None)
+        end = end_w["text_uthmani"] if end_w else ""
         ayahs.append({
             "n": v["verse_number"],
             "key": v["verse_key"],
@@ -61,6 +62,8 @@ def build_surah(meta: dict, verses: list[dict]) -> dict:
             "page": v.get("page_number"),
             "hizb": v.get("hizb_number"),
             "end": end,
+            # Madinah-mushaf line of the ayah-number marker (pages 1..604, lines 1..15)
+            "end_ln": end_w.get("line_number") if end_w else None,
             "_words": words,
         })
 
@@ -94,6 +97,8 @@ def build_surah(meta: dict, verses: list[dict]) -> dict:
             "wbw": w.get("audio_url"),
             "rules": annotate_word(segs, ctx),
             "waqf": waqf_in(text),
+            "pg": w.get("page_number"),
+            "ln": w.get("line_number"),
         })
     for a in ayahs:
         a.pop("_words", None)

@@ -6,13 +6,14 @@
   <!-- "server" = local FastAPI backend; export_static.py rewrites this to "static" -->
   <meta name="hifz-mode" content="server">
   <title>مُعين الحفظ</title>
-  <meta name="description" content="استمع إلى الآيات بصوت القارئ الذي تختاره، وكرّرها، وتابع الكلمة المقروءة وأحكام التجويد.">
+  <meta name="description" content="استمع إلى الآيات أو صفحة كاملة من المصحف بصوت القارئ الذي تختاره، وكرّرها، وتابع الكلمة المقروءة وأحكام التجويد والتفسير.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;600&display=swap" rel="stylesheet">
   <link rel="preload" href="fonts/UthmanicHafs1Ver18.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/app.css">
   <link rel="stylesheet" href="css/learn.css">
+  <link rel="stylesheet" href="css/reader.css">
   <script>
     // Apply the saved theme before first paint to avoid a flash.
     try { const s = JSON.parse(localStorage.getItem("hifz.v1") || "{}"); if (s.theme) document.documentElement.dataset.theme = s.theme; } catch {}
@@ -43,13 +44,22 @@
       <select id="surah"></select>
     </div>
     <div class="field field--range">
-      <span class="field__label" id="range-label">الآيات</span>
-      <div class="range" role="group" aria-labelledby="range-label">
+      <div class="seg-ctl seg-ctl--xs" role="radiogroup" aria-label="طريقة التحديد" id="unit">
+        <button type="button" role="radio" data-v="ayahs">آيات</button>
+        <button type="button" role="radio" data-v="page">صفحة كاملة</button>
+      </div>
+      <div class="range" role="group" aria-label="الآيات" id="range-ctl">
         <label class="sr-only" for="from">من الآية</label>
         <input id="from" type="number" min="1" inputmode="numeric">
         <span aria-hidden="true">إلى</span>
         <label class="sr-only" for="to">إلى الآية</label>
         <input id="to" type="number" min="1" inputmode="numeric">
+      </div>
+      <div class="range" role="group" aria-label="صفحة المصحف" id="page-ctl" hidden>
+        <button type="button" class="icon-btn icon-btn--sm" id="page-prev" aria-label="الصفحة السابقة">›</button>
+        <label class="sr-only" for="page">رقم الصفحة</label>
+        <input id="page" type="number" min="1" max="604" inputmode="numeric">
+        <button type="button" class="icon-btn icon-btn--sm" id="page-next" aria-label="الصفحة التالية">‹</button>
       </div>
     </div>
     <div class="field field--reciter">
@@ -110,10 +120,20 @@
         <header class="surah-head" id="surah-head"></header>
         <div class="mushaf" id="mushaf" aria-live="off"></div>
         <div class="state" id="state" hidden></div>
+        <nav class="page-nav" id="page-nav" aria-label="تنقّل الصفحات" hidden>
+          <button type="button" class="btn" data-step="-1">الصفحة السابقة</button>
+          <span class="muted" id="page-nav-label"></span>
+          <button type="button" class="btn" data-step="1">الصفحة التالية</button>
+        </nav>
       </div>
     </article>
 
-    <aside class="side" aria-label="أحكام التجويد">
+    <aside class="side" id="side" aria-label="التجويد والتفسير">
+      <div class="side-tabs" role="tablist" aria-label="اللوحة الجانبية">
+        <button type="button" role="tab" id="tab-tajweed" aria-controls="side-tajweed" data-v="tajweed">التجويد</button>
+        <button type="button" role="tab" id="tab-tafsir" aria-controls="tafsir-panel" data-v="tafsir">التفسير</button>
+      </div>
+      <div id="side-tajweed" class="side-group" role="tabpanel" aria-labelledby="tab-tajweed">
       <section class="panel" id="word-panel">
         <h2 class="panel__title">تدقيق الكلمة</h2>
         <div id="word-audit" class="word-audit">
@@ -135,6 +155,8 @@
         <p class="hint">اضغط على حكم لإبرازه وحده في النص.</p>
         <div id="legend" class="legend"></div>
       </section>
+      </div>
+      <section class="panel tafsir" id="tafsir-panel" role="tabpanel" aria-labelledby="tab-tafsir" hidden></section>
     </aside>
   </main>
 

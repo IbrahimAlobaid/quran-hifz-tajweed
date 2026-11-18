@@ -15,3 +15,8 @@ covered by the MIT license in LICENSE:
       KFGQPC Uthmanic Script Hafs — King Fahd Glorious Qur'an Printing Complex.
   * Data fetched at runtime (Qur'an text, tajweed markup, recitations, word
     timings) from Quran.com / QDC — subject to the Quran Foundation terms.
+  * Tafsir texts shown in the tafsir panel are fetched at runtime and are not
+    stored in this repository: Quran.com API v4 (Muyassar, al-Sa'di,
+    al-Baghawi, al-Wasit, Ibn Kathir, al-Qurtubi, al-Tabari) - Quran
+    Foundation terms; spa5k/tafsir_api via jsDelivr (al-Mukhtasar by Tafsir
+    Center, al-Jalalayn; data from QUL / Tarteel) - rights of their publishers.

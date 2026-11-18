@@ -4,7 +4,8 @@
 
 موقع يعمل على جهازك لمساعدتك على حفظ القرآن الكريم **بالاستماع والمتابعة**، ولتعلّم أحكام التجويد.
 
-- **في قسم الحفظ:** تختار السورة والآيات والقارئ، فتسمع كل آية بالعدد الذي تريده، وتُضاء في النص الكلمة التي يقرؤها القارئ لحظة بلحظة. وتظهر أحكام التجويد ملوّنة، ومع كل حكم سببه في هذه الكلمة بالذات.
+- **في قسم الحفظ:** تختار آيات من سورة أو صفحة كاملة من المصحف، ثم القارئ، فتسمع كل آية بالعدد الذي تريده، وتُضاء في النص الكلمة التي يقرؤها القارئ لحظة بلحظة. وتظهر أحكام التجويد ملوّنة، ومع كل حكم سببه في هذه الكلمة بالذات.
+- **في التفسير:** تفسير الآية الحالية أو كل الآيات المحددة، من تسعة كتب مرتّبة في ثلاثة مستويات: مختصر، ومتوسط، وموسّع.
 - **في قسم التعلّم:** ٣٤ درسًا في أحكام التجويد، تسمع أمثلتها بصوت القارئ نفسه كلمةً بكلمة، وفي آخر كل درس اختبار، ومعها متنا تحفة الأطفال والجزرية.
 
 > المشروع للاستماع والتتبع والتعلّم فقط، ولا يسجّل صوتك ولا يكشف أخطاء التلاوة.
@@ -37,7 +38,9 @@
 
 | الميزة | التفاصيل |
 |---|---|
-| اختيار المقطع | أي سورة من السور الـ١١٤، من آية إلى آية |
+| اختيار المقطع | **آيات:** من آية إلى آية في أي سورة. **صفحة كاملة:** أي صفحة من صفحات مصحف المدينة الـ٦٠٤ |
+| صفحة المصحف | تُعرض الصفحة سطرًا سطرًا كما في المصحف المطبوع، مع رؤوس السور والبسملة، ويُضبط حجم الخط ليتسع السطر. على شاشة الهاتف الضيقة تنساب الصفحة نفسها بخط مريح للقراءة |
+| صفحة فيها أكثر من سورة | مثل الصفحة ٦٠٤ (الإخلاص والفلق والناس): تنتقل التلاوة من سورة إلى التي بعدها، ويتكرر تكرار المقطع على الصفحة كلها |
 | ١٤ قارئًا | منهم الحصري (مرتّل ومعلّم)، والمنشاوي (مرتّل، ومعلّم مع ترديد الأطفال)، والعفاسي، وعبد الباسط (مرتّل ومجوّد)، والسديس، والشريم، والدوسري |
 | تكرار الآية | من مرة إلى ١٠ مرات، أو بلا توقف |
 | تكرار المقطع | تكرار المقطع كاملًا بعدد محدد أو بلا توقف |
@@ -65,7 +68,22 @@
 - **أحكام الآية:** ملخص الأحكام في الآية الحالية مع الكلمات التي فيها كل حكم.
 - **إبراز حكم واحد:** الضغط على حكم في دليل الألوان يُبرز مواضعه وحدها في النص.
 
-### ٣. تعلّم التجويد
+### ٣. التفسير
+
+في اللوحة الجانبية تبويبان: **التجويد** و**التفسير**. وفي التفسير قائمة منسدلة واحدة، كتبها مرتّبة في ثلاثة مستويات:
+
+| المستوى | متى تختاره | الكتب |
+|---|---|---|
+| **مختصر** | لفهم المعنى سريعًا أثناء الحفظ | التفسير الميسّر، المختصر في التفسير، تفسير الجلالين |
+| **متوسط** | للتدبّر والفوائد | السعدي، البغوي، الوسيط لطنطاوي |
+| **موسّع** | للدراسة والأقوال والأحكام | ابن كثير، القرطبي، الطبري |
+
+- **النطاق:** «الآية الحالية» يتبع التلاوة أو الآية التي تختارها. و«كل المحدّد» يعرض تفسير الآيات المختارة أو الصفحة كلها، ويُبرز الآية التي يقرؤها القارئ.
+- **الآيات المفسَّرة معًا:** إذا فسّر الكتاب عدة آيات في موضع واحد، يظهر التفسير مرة واحدة بعنوان «الآيات ٣–٤».
+- **النصوص الطويلة:** في «كل المحدّد» يظهر أول المقطع الطويل، وزر «اقرأ التفسير كاملًا» يعرض بقيته.
+- **النص كما هو:** يُعرض نص الكتاب كما جاء من مصدره دون تعديل، ولا يولّد الموقع أي تفسير.
+
+### ٤. تعلّم التجويد
 
 | القسم | المحتوى |
 |---|---|
@@ -85,6 +103,7 @@
 | مسافة | تشغيل / إيقاف |
 | السهم الأيسر | الآية التالية |
 | السهم الأيمن | الآية السابقة |
+| Page Down / Page Up | الصفحة التالية / السابقة (في وضع الصفحة) |
 | `T` | تشغيل / إطفاء ألوان التجويد |
 | `R` | تكرار الآية بلا توقف / مرة واحدة |
 | Enter على كلمة | تدقيق الكلمة |
@@ -206,6 +225,28 @@ python scripts/prefetch.py --reciter 7 --surahs 78-114   # + توقيت وصوت
 
 وتُدرج المهلة بعد كل قراءة إن كانت مفعّلة. ويستمر التكرار حتى لو كانت نافذة المتصفح في الخلفية.
 
+### صفحة المصحف
+
+كل كلمة في بيانات السورة تحمل رقم صفحتها وسطرها في مصحف المدينة (`pg`، `ln`)، وكذلك رقم الآية (`end_ln`).
+
+- **في المصحف كله:** لا توجد آية تبدأ في صفحة وتنتهي في التي بعدها. فالصفحة دائمًا آيات كاملة، ومقطع التلاوة فيها محدد تمامًا.
+- **أقصى ما في الصفحة الواحدة:** ثلاث سور، من الصفحة ٥٩٥ إلى ٦٠٤.
+- **تحديد الصفحة:** الواجهة تختار السور التي يغطي مداها الصفحة، ثم الآيات التي رقم صفحتها هو الصفحة المطلوبة. فكل صفحة تُعرض بلا فهرس إضافي.
+- **العرض:** الصفحة مقطع واحد أو أكثر `{سورة، من، إلى}`، وكل شيء معرَّف بالسورة أيضًا (`سورة:آية:كلمة`). والمشغّل يعمل على مقطع واحد، فإذا انتهى انتقل إلى الذي بعده.
+- **ضبط المقاس:** يُقاس أطول سطر، ثم يُختار حجم الخط ليتسع له. والسطر القصير، كآخر سطر في سورة، يتوسّط ولا يتمدّد. وإذا نزل الخط عن ١٩px انسابت الصفحة فقرة واحدة بالحجم المعتاد.
+
+### التفسير
+
+يجلب المتصفح التفسير مباشرة من مصدرين لا يحتاجان مفتاحًا ويسمحان بالطلب من أي موقع (CORS)، في وضعي التشغيل المحلي والثابت:
+
+| المصدر | الكتب | كيف تُعرف الآيات المفسَّرة معًا |
+|---|---|---|
+| Quran.com API v4 `tafsirs/{id}/by_ayah/{s:a}` | الميسّر (16)، السعدي (91)، البغوي (94)، الوسيط (93)، ابن كثير (14)، القرطبي (90)، الطبري (15) | الرد يذكر الآيات التي يغطيها. والآية التي فُسّرت مع ما قبلها ترجع 404، فيُرجع إلى الآية التي قبلها |
+| [spa5k/tafsir_api](https://github.com/spa5k/tafsir_api) على jsDelivr، الإصدار `1.2.3` | المختصر في التفسير، الجلالين | ملف واحد لكل سورة. والنص المكرر في آيات متتالية يعني أنها فُسّرت معًا |
+
+- **الأمان:** نص HTML القادم من المصدر لا يُدرج كما هو. يُحلَّل بـ `DOMParser` دون تنفيذ، ثم يُعاد بناؤه من النصوص فقط: فقرات، وفواصل أسطر، وأقواس الآيات ﴿ ﴾ و{ }.
+- **منطق التجميع:** في `frontend/js/tafsir-data.js`، بلا اعتماد على DOM، وتختبره Node.
+
 ### تدقيق أحكام التجويد
 
 يرمّز Quran.com كل كلمة هكذا:
@@ -272,7 +313,7 @@ python scripts/import_learn.py --lessons ../learn-tajweed --ghunna ../ghunna
 |---|---|
 | `GET /api/health` | فحص الحالة |
 | `GET /api/surahs` | قائمة السور: الاسم، وعدد الآيات، ومكية أو مدنية، والبسملة |
-| `GET /api/surah/{n}` | آيات السورة: كلمات كل آية بأجزاء التجويد، وأسباب الأحكام، وعلامات الوقف، ومسار صوت الكلمة |
+| `GET /api/surah/{n}` | آيات السورة: كلمات كل آية بأجزاء التجويد، وأسباب الأحكام، وعلامات الوقف، ومسار صوت الكلمة، وصفحتها وسطرها في المصحف |
 | `GET /api/reciters` | القرّاء الذين لهم توقيت كلمات |
 | `GET /api/timings/{rid}/{n}` | توقيت الآيات والكلمات لقارئ وسورة، وحالة حفظ الصوت |
 | `GET /api/audio/{rid}/{n}?cache=1` | صوت السورة من القرص (يدعم Range)، أو تحويل إلى المصدر مع الحفظ في الخلفية. `cache=0` بث دون حفظ |
@@ -291,7 +332,9 @@ python scripts/import_learn.py --lessons ../learn-tajweed --ghunna ../ghunna
      "note": "نون ساكنة بعدها «ف» من حروف الإخفاء ← تُخفى مع غنة حركتين."}
   ],
   "waqf": [],
-  "wbw": "wbw/002_003_008.mp3"
+  "wbw": "wbw/002_003_008.mp3",
+  "pg": 2,
+  "ln": 6
 }
 ```
 
@@ -341,15 +384,19 @@ python scripts/import_learn.py --lessons ../learn-tajweed --ghunna ../ghunna
 │   └── requirements.txt
 └── frontend/
     ├── index.html
-    ├── css/app.css, css/learn.css
+    ├── package.json                 لتشغيل اختبارات Node فقط (لا خطوة بناء)
+    ├── css/app.css, css/learn.css, css/reader.css
     ├── js/
     │   ├── main.js                  الربط والتنقل بين القسمين
     │   ├── player.js                محرك التكرار والتتبع
-    │   ├── view.js                  عرض النص وأوضاع الحفظ
+    │   ├── view.js                  عرض الآيات أو صفحة المصحف، وأوضاع الحفظ
+    │   ├── tafsir.js                لوحة التفسير
+    │   ├── tafsir-data.js           مصادر التفسير ومستوياته وتجميع الآيات
     │   ├── tajweed.js               دليل الألوان والتدقيق
     │   ├── learn.js                 قسم التعلّم
     │   ├── clip.js                  مقاطع الأمثلة
     │   ├── learn-data.js, api.js, store.js, util.js
+    ├── tests/                       node --test (منطق التفسير)
     ├── data/learn/                  الدروس والمتون والتدريب (JSON ثابت)
     └── fonts/                       خط KFGQPC Uthmanic Hafs
 ```
@@ -361,12 +408,15 @@ python scripts/import_learn.py --lessons ../learn-tajweed --ghunna ../ghunna
 ```bash
 cd backend
 python -m pytest -q
+cd ../frontend
+node --test tests/*.test.mjs
 ```
 
-تغطي الاختبارات ثلاثة أشياء:
+تغطي الاختبارات أربعة أشياء:
 
 - **محلل الترميز:** دمج الأجزاء، والأحكام المتداخلة، ورفض الوسوم غير المعروفة.
 - **أسباب الأحكام:** الإخفاء داخل الكلمة، والتنوين بين كلمتين، والقلقلة الكبرى، والمد اللازم الحرفي.
+- **التفسير (Node):** الرجوع إلى الآية السابقة عند 404، وتجميع النص المكرر، ودمج الآيات المفسَّرة معًا بترتيبها.
 - **البيانات:** تنظيف التوقيتات، وسلامة الدروس المستوردة، وأن كل حكم يشير إلى درس موجود وأبيات موجودة.
 
 ---
@@ -381,7 +431,8 @@ python -m pytest -q
 
 - **ما يُصدَّر:** نص السور الـ١١٤ وأحكامها، وتوقيت الكلمات لكل القرّاء الـ١٤، والدروس.
 - **الصوت:** لا يُصدَّر، بل يطلبه المتصفح من خوادم Quran.com مباشرة.
-- **الحجم:** نحو ٥٣ MB في ١٬٧٦٦ ملفًا، وأكبر ملف ١٫٩ MB.
+- **الحجم:** نحو ٥٥ MB في قرابة ١٬٧٧٠ ملفًا، وأكبر ملف نحو ٢ MB.
+- **التفسير:** لا يُصدَّر، بل يطلبه المتصفح من مصدره عند الحاجة.
 - **حدود Cloudflare Pages المجانية:** ٢٠٬٠٠٠ ملف، و٢٥ MB للملف الواحد.
 
 ```bash
@@ -437,10 +488,13 @@ npx wrangler pages deploy dist --project-name quran-hifz-tajweed
 | [Quran.com API v4](https://api-docs.quran.com/) | النص العثماني، وترميز التجويد، وصوت الكلمات | وفق [شروط Quran Foundation](https://quran.foundation/) |
 | [Quran.com QDC / quranicaudio.com](https://quranicaudio.com/) | تلاوات السور وتوقيت الكلمات | وفق شروط المصدر |
 | [edriso/learn-tajweed](https://github.com/edriso/learn-tajweed) | الدروس والاختبارات والفيديوهات والخلاصة | 0BSD |
+| Quran.com API v4 (التفاسير) | الميسّر، والسعدي، والبغوي، والوسيط، وابن كثير، والقرطبي، والطبري. تُعرض من المصدر مباشرة ولا تُحفظ في الريبو | وفق [شروط Quran Foundation](https://quran.foundation/) |
+| [spa5k/tafsir_api](https://github.com/spa5k/tafsir_api) (بيانات [QUL](https://qul.tarteel.ai/)) | المختصر في التفسير (مركز تفسير)، والجلالين. تُعرض من المصدر مباشرة | الكود MIT، والنصوص على حقوق ناشريها |
 | [mwiederrecht/ghunna](https://github.com/mwiederrecht/ghunna) | نصّا المتنين من ويكي مصدر، وأبيات كل حكم | MIT |
 | [IbrahimAlobaid/Quran-Recitation-Checker](https://github.com/IbrahimAlobaid/Quran-Recitation-Checker) | المشروع المرجعي: بنية FastAPI، وأسماء الأحكام | — |
 | خط KFGQPC Uthmanic Hafs | عرض النص القرآني | مجمع الملك فهد لطباعة المصحف الشريف |
 | IBM Plex Sans Arabic | خط الواجهة (Google Fonts) | SIL OFL 1.1 |
+| Noto Naskh Arabic | خط نص التفسير (Google Fonts) | SIL OFL 1.1 |
 
 ومراجع الدروس العلمية:
 
@@ -470,7 +524,8 @@ npx wrangler pages deploy dist --project-name quran-hifz-tajweed
 **Mu'een al-Hifz** is a local web app for memorizing the Qur'an by listening and following along, plus a full tajweed course.
 
 **Memorize**
-- Pick a surah, an ayah range and one of 14 reciters.
+- Pick an ayah range, or a full Madinah-mushaf page (604 pages, laid out line by line; pages holding several surahs play straight through).
+- Choose one of 14 reciters.
 - Repeat each ayah N times or loop the range, with an optional pause to repeat after the reciter.
 - The current word is highlighted live from Quran.com word-level timings.
 
@@ -479,6 +534,12 @@ npx wrangler pages deploy dist --project-name quran-hifz-tajweed
 - Clicking a word explains every rule it contains: the trigger letter and the reason.
 - Each rule also shows its proof lines from *Tuḥfat al-Aṭfāl* or *al-Jazariyya*.
 - The reason engine was validated on all 77,429 words of the mushaf.
+
+**Tafsir**
+- A second side tab shows commentary for the current ayah or the whole selection.
+- Nine books in one dropdown, grouped as brief (Muyassar, Mukhtasar, Jalalayn), middle (Sa'di, Baghawi, Wasit) and deep (Ibn Kathir, Qurtubi, Tabari).
+- Texts are fetched live from Quran.com API v4 and spa5k/tafsir_api, shown verbatim and rebuilt as plain text (never injected as HTML).
+- Ayahs that a book explains together are shown once.
 
 **Learn**
 - 34 Arabic lessons in 11 units (from *learn-tajweed*, 0BSD).
@@ -491,7 +552,7 @@ npx wrangler pages deploy dist --project-name quran-hifz-tajweed
 ```bash
 cd backend && pip install -r requirements.txt && python -m uvicorn app.main:app --port 8000
 ```
-Then open http://127.0.0.1:8000. Tests: `python -m pytest -q`.
+Then open http://127.0.0.1:8000. Tests: `python -m pytest -q` (backend) and `node --test tests/*.test.mjs` (in `frontend/`).
 
 **Free hosting:** `python backend/scripts/export_static.py` writes a fully static build to `dist/` (~53 MB; audio streams from the Quran.com CDNs). On Cloudflare Pages, use the build command `pip install -r backend/requirements.txt && python backend/scripts/export_static.py`, output directory `dist`, and `PYTHON_VERSION=3.12`.
 
