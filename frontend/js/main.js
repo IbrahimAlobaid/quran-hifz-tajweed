@@ -148,6 +148,9 @@ async function segsForPage(P) {
   }).filter(Boolean);
 }
 
+/** The surah whose first ayah opens page P + 1 (its title may close page P). */
+const surahAfter = (P) => surahs.find((m) => m.pages && m.pages[0] === P + 1) || null;
+
 /** The previous and next pages, rendered beside the page so a swipe shows them coming in. */
 const slotViews = {};
 let slotToken = 0;
@@ -165,7 +168,7 @@ async function renderNeighbors(P) {
     try { sg = await segsForPage(Q); } catch { return; } // offline: the swipe still works, the page loads after it
     if (token !== slotToken) return;
     slot.hidden = false;
-    v.render(sg, { layout: "page", page: Q });
+    v.render(sg, { layout: "page", page: Q, after: surahAfter(Q) });
     slot.dataset.page = Q;
     v.setMode(settings.hideMode);
     v.root.classList.toggle("tj-on", tajweedOn());
@@ -198,7 +201,7 @@ async function loadSelection({ at = null } = {}) {
     if (token !== loadToken) return;
     segs = next;
     pagePass = 1;
-    view.render(segs, { layout: isPage() ? "page" : "flow", page: settings.page });
+    view.render(segs, { layout: isPage() ? "page" : "flow", page: settings.page, after: isPage() ? surahAfter(settings.page) : null });
     view.setMode(settings.hideMode);
     viewer.paintMarks();
     panel.renderLegend(countRules(segs));
@@ -468,10 +471,15 @@ document.addEventListener("keydown", (e) => {
   if (document.body.classList.contains("grid-open") || document.querySelector("dialog[open]")) return;
   if (e.target.closest("input, select, textarea") || e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.code === "Space" && !e.target.closest(".w, button")) { if (settings.withReciter) { e.preventDefault(); player.toggle(); } }
-  else if (e.key === "ArrowLeft") { e.preventDefault(); step(1); }   // RTL: left = forward
-  else if (e.key === "ArrowRight") { e.preventDefault(); step(-1); }
-  else if (e.key === "PageDown" && isPage()) { e.preventDefault(); goPage(settings.page + 1); }
-  else if (e.key === "PageUp" && isPage()) { e.preventDefault(); goPage(settings.page - 1); }
+  // RTL: left = forward. On a mushaf page the arrows turn the page, as in a printed mushaf;
+  // in an ayah range they move between ayahs.
+  else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+    e.preventDefault();
+    const dir = e.key === "ArrowLeft" ? 1 : -1;
+    if (isPage()) viewer.step(dir); else step(dir);
+  }
+  else if (e.key === "PageDown" && isPage()) { e.preventDefault(); viewer.step(1); }
+  else if (e.key === "PageUp" && isPage()) { e.preventDefault(); viewer.step(-1); }
   else if (e.key.toLowerCase() === "t") { ui.tj.click(); }
   else if (e.key.toLowerCase() === "r") {
     const v = settings.ayahRepeat === 0 ? 1 : 0;

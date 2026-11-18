@@ -58,8 +58,12 @@ export class MushafView extends EventTarget {
     }).observe(wrap);
   }
 
-  /** @param segs [{s, from, to}]  @param opts {layout: "flow"|"page", page} */
-  render(segs, { layout = "flow", page = null } = {}) {
+  /**
+   * @param segs [{s, from, to}]
+   * @param opts {layout: "flow"|"page", page, after}: `after` is the surah that starts on the
+   *   next page (meta: id, name, ayahs), whose title the printed page may carry on its last line
+   */
+  render(segs, { layout = "flow", page = null, after = null } = {}) {
     this.segs = segs;
     this.layout = layout;
     this.words.clear();
@@ -67,7 +71,7 @@ export class MushafView extends EventTarget {
     this.current = this.selected = null;
     this.currentAyah = [];
     this.root.classList.toggle("mushaf--page", layout === "page");
-    if (layout === "page") this._renderPage(segs, page);
+    if (layout === "page") this._renderPage(segs, page, after);
     else this._renderFlow(segs[0]);
   }
 
@@ -92,7 +96,7 @@ export class MushafView extends EventTarget {
     this.root.replaceChildren(frag);
   }
 
-  _renderPage(segs, page) {
+  _renderPage(segs, page, after) {
     const first = segs[0];
     const v0 = first.s.verses.find((v) => v.n === first.from);
     // As in the printed mushaf: the juz on the right, the surah on the left, the page number below.
@@ -104,16 +108,26 @@ export class MushafView extends EventTarget {
     this.foot?.replaceChildren(el("span", {}, ar(page)));
 
     // Flatten the page into [line, item] in reading order, then group by line.
+    // A surah's title and basmala take the free lines above its first ayah, as printed:
+    // two lines for both, one for the basmala alone when the title closed the page before.
     const lines = [];
-    let line = null;
+    let line = null, lastLn = 0;
     const lineFor = (ln) => {
       if (!line || line.ln !== ln) { line = { ln, items: [] }; lines.push(line); }
+      lastLn = Math.max(lastLn, ln || 0);
       return line;
     };
     for (const { s, from, to } of segs) {
       if (from === 1) {
+        const firstLn = s.verses[0]?.words[0]?.ln;
+        const free = firstLn ? firstLn - lastLn - 1 : 2;
+        const opening = page <= 2;
         line = null;
-        lines.push({ header: s });
+        lines.push({
+          header: s,
+          name: opening || free >= (s.bismillah ? 2 : 1),
+          basmala: s.bismillah && (opening || free >= 1),
+        });
       }
       for (const a of s.verses) {
         if (a.n < from || a.n > to) continue;
@@ -125,11 +139,8 @@ export class MushafView extends EventTarget {
     const frag = document.createDocumentFragment();
     for (const ln of lines) {
       if (ln.header) {
-        frag.append(el("div", { class: "page-surah" },
-          el("span", { class: "page-surah__m", title: "ترتيبها في المصحف" }, el("small", {}, "ترتيبها"), ar(ln.header.id)),
-          el("span", { class: "page-surah__name" }, `سورة ${ln.header.name}`),
-          el("span", { class: "page-surah__m", title: "عدد آياتها" }, el("small", {}, "آياتها"), ar(ln.header.ayahs))));
-        if (ln.header.bismillah) frag.append(el("p", { class: "basmala basmala--page" }, BASMALA));
+        if (ln.name) frag.append(this._surahBand(ln.header));
+        if (ln.basmala) frag.append(el("p", { class: "basmala basmala--page" }, BASMALA));
         continue;
       }
       const row = el("div", { class: "line" });
@@ -141,9 +152,19 @@ export class MushafView extends EventTarget {
       }
       frag.append(row);
     }
+    // the next surah's title on the last line, when its first ayah starts overleaf
+    if (after && page > 2 && lastLn && lastLn < 15) frag.append(this._surahBand(after));
     this.root.replaceChildren(frag);
     this.root.classList.toggle("page--opening", page <= 2);
     this._fitPage();
+  }
+
+  /** A surah's title band: its name, with its order and ayah count in rosettes. */
+  _surahBand(s) {
+    return el("div", { class: "page-surah" },
+      el("span", { class: "page-surah__m", title: "ترتيبها في المصحف" }, el("small", {}, "ترتيبها"), ar(s.id)),
+      el("span", { class: "page-surah__name" }, `سورة ${s.name}`),
+      el("span", { class: "page-surah__m", title: "عدد آياتها" }, el("small", {}, "آياتها"), ar(s.ayahs)));
   }
 
   /** Scale the page so its longest line fits the reader, like a printed page.

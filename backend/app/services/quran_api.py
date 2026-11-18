@@ -6,7 +6,7 @@ from app.config import get_settings
 from app.services.cache import cached_json, get_json
 from app.services.tajweed_audit import annotate_word, parse_markup, waqf_in
 
-SCHEMA_VERSION = "v2"  # v2: mushaf page/line per word (page layout)
+SCHEMA_VERSION = "v3"  # v3: page/line from the KFGQPC (v2) printing, not the 1405 (v1) one
 
 
 async def chapters() -> list[dict]:
@@ -38,7 +38,9 @@ async def _fetch_verses(n: int) -> list[dict]:
             f"{base}/verses/by_chapter/{n}",
             params={
                 "words": "true",
-                "word_fields": "text_uthmani,text_uthmani_tajweed",
+                # line_number/page_number of a word follow the old 1405 (v1) printing; the
+                # pages here and the Hafs font follow the KFGQPC (v2) printing, so take its lines
+                "word_fields": "text_uthmani,text_uthmani_tajweed,v2_page,line_v2",
                 "per_page": 50,
                 "page": page,
             },
@@ -46,6 +48,11 @@ async def _fetch_verses(n: int) -> list[dict]:
         verses.extend(d["verses"])
         page = d["pagination"].get("next_page")
     return verses
+
+
+def _line(w: dict) -> int | None:
+    """A word's line (1-15) on its page of the KFGQPC (v2) mushaf, the one the pages and font follow."""
+    return w.get("line_v2") or w.get("line_number")
 
 
 def build_surah(meta: dict, verses: list[dict]) -> dict:
@@ -63,7 +70,7 @@ def build_surah(meta: dict, verses: list[dict]) -> dict:
             "hizb": v.get("hizb_number"),
             "end": end,
             # Madinah-mushaf line of the ayah-number marker (pages 1..604, lines 1..15)
-            "end_ln": end_w.get("line_number") if end_w else None,
+            "end_ln": _line(end_w) if end_w else None,
             "_words": words,
         })
 
@@ -97,8 +104,8 @@ def build_surah(meta: dict, verses: list[dict]) -> dict:
             "wbw": w.get("audio_url"),
             "rules": annotate_word(segs, ctx),
             "waqf": waqf_in(text),
-            "pg": w.get("page_number"),
-            "ln": w.get("line_number"),
+            "pg": w.get("v2_page") or w.get("page_number"),
+            "ln": _line(w),
         })
     for a in ayahs:
         a.pop("_words", None)

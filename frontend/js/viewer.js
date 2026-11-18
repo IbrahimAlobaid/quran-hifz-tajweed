@@ -96,6 +96,11 @@ export class Viewer {
     this.setSheet(wide() && this.settings.panelOpen !== false ? "half" : "closed");
   }
 
+  /** Turn one page (dir 1 = next) with the same slide as a swipe: the arrow keys. */
+  step(dir) {
+    if (this.canStep(dir)) this.slide(dir, 0);
+  }
+
   canStep(dir) { return !!this.page && !this.settling && this.page + dir >= 1 && this.page + dir <= 604; }
 
   /** The neighbour page in direction dir is rendered and ready to slide in. */

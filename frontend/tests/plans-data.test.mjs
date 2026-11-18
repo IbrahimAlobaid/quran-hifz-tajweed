@@ -43,8 +43,8 @@ test("a page is cut by the line each ayah starts on", () => {
   assert.deepEqual(toSegs(p604[0]), [{ s: 112, from: 1, to: 4 }]);
   assert.deepEqual(toSegs(p604[1]), [{ s: 113, from: 1, to: 5 }, { s: 114, from: 1, to: 6 }]);
   assert.equal(cutPage(index.pages[1], 2).length, 1); // page 2 is a short opening page (lines 3–7)
-  const p3 = cutPage(index.pages[2], 2); // البقرة ٦–١٦, no surah start to snap to
-  assert.deepEqual(p3.map((g) => toSegs(g)), [[{ s: 2, from: 6, to: 11 }], [{ s: 2, from: 12, to: 16 }]]);
+  const p3 = cutPage(index.pages[2], 2); // البقرة ٦–١٦, no surah start to snap to; ١٢ starts on line 8
+  assert.deepEqual(p3.map((g) => toSegs(g)), [[{ s: 2, from: 6, to: 12 }], [{ s: 2, from: 13, to: 16 }]]);
   assert.equal(cutPage(index.pages[47], 3).length, 1); // page 48: one long ayah (آية الدين)
 });
 
