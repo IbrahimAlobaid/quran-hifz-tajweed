@@ -2,13 +2,20 @@
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
 import { test } from "node:test";
-import { blockWords, compare, gaps, norm, question } from "../js/mutashabihat-data.js";
+import { blockWords, compare, gaps, norm, question, searchKey } from "../js/mutashabihat-data.js";
 
 const dir = new URL("../data/mutashabihat/", import.meta.url);
 const load = (f) => JSON.parse(readFileSync(new URL(f, dir), "utf8"));
 const daw = load("dawabit.json");
 const T = daw.text;
 const marked = (words, marks, kind) => words.filter((_, i) => marks[i] === kind).map(norm);
+
+test("plain spelling finds the mushaf spelling", () => {
+  const ayah = searchKey("ٱلَّذِينَ يُؤۡمِنُونَ بِٱلۡغَيۡبِ وَيُقِيمُونَ ٱلصَّلَوٰةَ");
+  assert.ok(ayah.includes(searchKey("الذين يؤمنون بالغيب")));
+  assert.ok(searchKey("ذَٰلِكَ ٱلۡكِتَٰبُ").includes(searchKey("الكتاب")));
+  assert.ok(!ayah.includes(searchKey("الكافرين")));
+});
 
 test("context-only marks don't make two words different", () => {
   assert.equal(norm("لَّا"), norm("لَا"));                  // idgham shadda from the word before

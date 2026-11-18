@@ -82,3 +82,21 @@ test("helpers", () => {
   assert.equal(prog[29], 1);
   assert.equal(prog[0], 0);
 });
+
+test("every page is named by its first three words, in the mushaf's spelling", () => {
+  assert.equal(index.names.length, 604);
+  assert.ok(index.names.every((n) => n.split(" ").length === 3));
+  const letters = (t) => t.replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "");
+  assert.equal(letters(index.names[498 - 1]), "\u0625\u0646 \u064A\u0648\u0645 \u0671\u0644\u0641\u0635\u0644"); // إن يوم الفصل
+  assert.equal(letters(index.names[604 - 1]), "\u0642\u0644 \u0647\u0648 \u0671\u0644\u0644\u0647"); // قل هو الله
+});
+
+test("the 60 hizbs start in order, each on the page of its first ayah", () => {
+  assert.equal(index.hizb.length, 60);
+  assert.deepEqual(index.hizb[0], [1, 1, 1]);
+  index.hizb.forEach(([p, s, a], i) => {
+    assert.ok(index.pages[p - 1].some(([ps, pa]) => ps === s && pa === a), `hizb ${i + 1}`);
+    if (i) assert.ok(p >= index.hizb[i - 1][0]);
+  });
+  assert.equal(index.hizb[39][0], 392); // الحزب ٤٠: القصص ٥١
+});

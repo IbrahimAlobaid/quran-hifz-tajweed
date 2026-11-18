@@ -101,7 +101,7 @@ export class MushafView extends EventTarget {
         el("span", { class: "page-head__juz" }, juzName(v0?.juz ?? 1)),
         el("span", { class: "page-head__surah" }, `سورة ${first.s.name}`)),
     );
-    this.foot?.replaceChildren(ar(page));
+    this.foot?.replaceChildren(el("span", {}, ar(page)));
 
     // Flatten the page into [line, item] in reading order, then group by line.
     const lines = [];
@@ -170,9 +170,8 @@ export class MushafView extends EventTarget {
       return;
     }
     root.style.setProperty("--page-font", `${size.toFixed(2)}px`);
+    // Every line spans the page, as in the printed mushaf (pages 1–2 are centred by .page--opening).
     root.style.setProperty("--page-w", `${Math.ceil((max * size) / 20)}px`);
-    // A line much shorter than the page (end of a surah, opening pages) is centred, not stretched.
-    lines.forEach((l, i) => l.classList.toggle("line--short", widths[i] < max * 0.78));
   }
 
   _ayahEl(s, n) {

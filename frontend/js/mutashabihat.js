@@ -1,10 +1,11 @@
 /**
  * «المتشابهات»: the similar places of an ayah in the memorize page (side tab
  * and a mark on the ayah number), and the #/mut page — how to tell similar
- * verses apart, browsing by surah, and practice.
+ * verses apart, finding them by surah, juz or words, and practice.
  * The Quran text is shown as it is; only colour marks the differences.
  */
-import { blockWords, compare, createMutStore, parseKey, question } from "./mutashabihat-data.js";
+import { blockWords, compare, createMutStore, parseKey, question, searchKey } from "./mutashabihat-data.js";
+import { mushafIndex } from "./mushaf-meta.js";
 import { ar, el } from "./util.js";
 
 async function fetchJson(url) {
@@ -158,14 +159,22 @@ export class MutPanel extends MutBase {
 }
 
 // ── the #/mut page ─────────────────────────────────────
-const TOC = [["how", "الطريقة"], ["rules", "قواعد الضبط"], ["browse", "تصفّح السور"], ["practice", "تدرّب"]];
+// One path down the page: how to use it, then find and compare, then practise.
+const STEPS = [["how", "افهم الطريقة"], ["browse", "ابحث وقارن"], ["practice", "تدرّب"]];
+const PAGE_SIZE = 25;
+
+/** A count with the noun in the form Arabic gives it: one, two, three to ten, eleven and up. */
+const counted = (n, [one, two, few, many]) =>
+  n === 1 ? one : n === 2 ? two : n <= 10 ? `${ar(n)} ${few}` : `${ar(n)} ${many}`;
+const PLACES = ["موضع واحد", "موضعان", "مواضع", "موضعًا"];
+const MATES = ["نظير واحد", "نظيران", "نظائر", "نظيرًا"];
 
 export class MutView extends MutBase {
   constructor({ root, surahs }) {
     super(surahs);
     this.root = root;
     this.surahs = surahs;
-    this.browseSurah = 2;
+    this.filter = { surah: "2", juz: "", q: "" };
   }
 
   async show(anchor) {
@@ -177,90 +186,179 @@ export class MutView extends MutBase {
     daw.rules.forEach((r) => RULE_NAMES.set(r.id, r.name));
     this.index = index;
     this.daw = daw;
-    this.root.replaceChildren(el("div", { class: "learn__wrap plans mut-page" },
-      el("div", { class: "learn__bar" }, el("nav", { class: "subnav", "aria-label": "أقسام الصفحة" },
-        TOC.map(([id, label]) => el("a", { href: `#/mut/${id}` }, label)))),
-      el("header", { class: "learn-hero" },
+    const nSurahs = Object.keys(index.surahs).length;
+    this.root.replaceChildren(el("div", { class: "learn__wrap mut-page" },
+      el("header", { class: "mut-head" },
         el("h1", {}, "المتشابهات اللفظية"),
-        el("p", {}, `آيات تتفق في أكثر ألفاظها وتختلف في كلمة أو حرف أو ترتيب، فيخلط الحافظ بينها. هنا ${ar(index.total)} موضعًا في ${ar(Object.keys(index.surahs).length)} سورة، تُقارن كلمةً بكلمة، مع قواعد تضبط بها الفرق، وتدريب عليها.`)),
-      this.howSection(), this.rulesSection(), this.browseSection(), this.practiceSection()));
-    const target = anchor && document.getElementById(`mut-${anchor}`);
+        el("p", {}, "آيات تتفق في أكثر ألفاظها وتختلف في كلمة أو حرف، فيخلط الحافظ بينها. ابحث عن الموضع، وانظر الفرق ملوّنًا، ثم تدرّب عليه."),
+        el("p", { class: "mut-head__stats" }, `${ar(index.total)} موضعًا في ${ar(nSurahs)} سورة`)),
+      el("nav", { class: "mut-steps", "aria-label": "خطوات الصفحة" }, el("ol", {},
+        STEPS.map(([id, label], i) => el("li", {}, el("a", { href: `#/mut/${id}` }, el("span", { class: "mut-steps__n" }, ar(i + 1)), label))))),
+      this.howSection(), this.browseSection(), this.practiceSection(),
+      el("p", { class: "mut-credit muted" }, "المواضع من بيانات «Quran Mutashabihat Data» لوقار أكرم (CC0)، والتلوين بمقارنة الكلمات آليًا.")));
+    if (anchor === "rules") this.root.querySelector(".mut-rulesbox").open = true;
+    const target = anchor && document.getElementById(`mut-${anchor === "rules" ? "how" : anchor}`);
     if (target) target.scrollIntoView({ block: "start" }); else window.scrollTo({ top: 0 });
   }
 
-  section(id, title, intro, ...content) {
-    return el("section", { class: "plan-sec", id: `mut-${id}` },
-      el("h2", {}, title), intro ? el("p", { class: "plan-sec__intro" }, intro) : null, ...content);
+  section(id, n, title, intro, ...content) {
+    return el("section", { class: "mut-sec", id: `mut-${id}` },
+      el("h2", {}, el("span", { class: "mut-sec__n", "aria-hidden": "true" }, ar(n)), title),
+      intro ? el("p", { class: "mut-sec__intro" }, intro) : null, ...content);
   }
 
   howSection() {
-    return this.section("how", "كيف تضبط المتشابهات", null,
-      el("ol", { class: "method__steps" },
-        el("li", {}, "افتح المصحف على الموضعين، وتأمّل الفرق بينهما حتى تراه بعينك."),
-        el("li", {}, "اجعل لنفسك قاعدة تميّز بها كل موضع، من القواعد التالية أو من عندك."),
-        el("li", {}, "ركّز على هذا الفرق كلما راجعت الموضعين حتى تتقنه."),
-        el("li", {}, "اكتب ما تخطئ فيه في دفتر، وراجعه مع وردك.")),
-      el("p", { class: "muted" }, "الخطوات الثلاث الأولى من كتاب «أسهل طريقة لحفظ القرآن الكريم» للشيخ عبد المحسن القاسم."),
-      el("h3", { class: "plan-sub" }, "في صفحة الحفظ"),
-      el("p", {}, "الآية التي لها مواضع متشابهة يكون رقمها مظلّلًا. واختر تبويب «المتشابهات» في اللوحة الجانبية، فترى مواضعها مقارنةً بها كلمةً بكلمة."),
-      legend());
-  }
-
-  rulesSection() {
-    return this.section("rules", "قواعد الضبط", "طرق يستعملها المحفّظون ليعرف الحافظ أي اللفظين في أي موضع. ليست قواعد لغوية، بل وسائل للتذكّر، فاختر منها ما يعلق بذهنك.",
-      el("div", { class: "mut-rules" }, this.daw.rules.map((r, i) => el("article", { class: "mut-rule", id: `rule-${r.id}` },
-        el("h3", {}, el("span", { class: "mut-rule__n" }, ar(i + 1)), r.name),
-        el("p", {}, r.explain),
-        ...r.examples.flatMap((ex) => [
-          this.comparison(this.daw.text, [ex.a], [ex.b], false, null, { here: false }),
-          el("p", { class: "mut-dabit" }, el("b", {}, "الضابط: "), ex.dabit)])))),
-      el("p", { class: "muted plan-note" }, "القواعد ١–١٠ وأمثلتها من «١٠ قواعد مهمة في ضبط الآيات المتشابهة» لعبد الشكور معلم عبد فارح، بتصرف في العبارة."));
-  }
-
-  browseSection() {
-    const sel = el("select", { id: "mut-surah", "aria-label": "السورة" },
-      this.surahs.filter((s) => this.index.surahs[String(s.id)]).map((s) =>
-        el("option", { value: s.id, selected: s.id === this.browseSurah }, `${ar(s.id)}. ${s.name} (${ar(this.index.surahs[String(s.id)])})`)));
-    const list = el("div", { class: "mut-list", "aria-live": "polite" });
-    const load = async () => {
-      this.browseSurah = +sel.value;
-      list.replaceChildren(el("p", { class: "muted" }, "جارٍ التحميل…"));
-      const d = await mutStore.surah(this.browseSurah);
-      list.replaceChildren(...d.groups.map((g) => {
-        const det = el("details", { class: "mut-item" },
-          el("summary", {}, el("span", { class: "mut-ref" }, this.ref(g.src)),
-            el("span", { class: "muted" }, ` مع ${g.muts.map((m) => this.ref(m)).join("، ")}`),
-            g.notes ? el("span", { class: "tag" }, "له ضابط") : null));
-        det.addEventListener("toggle", () => {
-          if (!det.open || det.dataset.done) return;
-          det.dataset.done = "1";
-          det.append(...g.muts.map((m, i) => this.comparison(d.text, g.src, m, g.ctx, g.notes?.[i], { here: false })));
+    const rules = el("details", { class: "mut-rulesbox" },
+      el("summary", {}, el("b", {}, `قواعد الضبط (${ar(this.daw.rules.length)})`),
+        el("span", { class: "muted" }, "وسائل يستعملها المحفّظون للتذكّر. افتح ما تحتاجه منها.")),
+      el("div", { class: "mut-rules" }, this.daw.rules.map((r, i) => {
+        const d = el("details", { class: "mut-rule", id: `rule-${r.id}` },
+          el("summary", {}, el("span", { class: "mut-rule__n" }, ar(i + 1)), r.name));
+        d.addEventListener("toggle", () => {
+          if (!d.open || d.dataset.done) return;
+          d.dataset.done = "1";
+          d.append(el("p", {}, r.explain), ...r.examples.flatMap((ex) => [
+            this.comparison(this.daw.text, [ex.a], [ex.b], false, null, { here: false }),
+            el("p", { class: "mut-dabit" }, el("b", {}, "الضابط: "), ex.dabit)]));
         });
-        return det;
-      }));
-    };
-    sel.addEventListener("change", load);
-    load();
-    return this.section("browse", "تصفّح السور", "اختر سورة، ثم افتح أي موضع لترى نظائره مقارنةً به.",
-      el("label", { class: "mut-pick" }, el("span", {}, "السورة"), sel), list);
+        return d;
+      })),
+      el("p", { class: "muted mut-note" }, "القواعد ١–١٠ وأمثلتها من «١٠ قواعد مهمة في ضبط الآيات المتشابهة» لعبد الشكور معلم عبد فارح، بتصرف في العبارة."));
+    return this.section("how", 1, "افهم الطريقة", null,
+      el("ol", { class: "mut-howto" },
+        el("li", {}, el("b", {}, "قارن الموضعين"), " حتى ترى الفرق بعينك. الكلمات المختلفة ملوّنة."),
+        el("li", {}, el("b", {}, "اجعل لكل موضع ضابطًا"), " تميّزه به، من قواعد الضبط أو من عندك."),
+        el("li", {}, el("b", {}, "ركّز على الفرق"), " كلما راجعت الموضعين، ودوّن ما تخطئ فيه.")),
+      legend(),
+      el("p", { class: "mut-tip" }, "في صفحة القراءة: الآية التي لها متشابهات رقمها مظلّل، وتجد مواضعها في تبويب «المتشابهات»."),
+      el("p", { class: "muted mut-note" }, "الخطوات من كتاب «أسهل طريقة لحفظ القرآن الكريم» للشيخ عبد المحسن القاسم، بتصرف."),
+      rules);
   }
 
+  // ── find and compare ─────────────────────────────────
+  browseSection() {
+    const f = this.filter;
+    const surahSel = el("select", { id: "mut-surah" },
+      el("option", { value: "" }, "كل السور"),
+      this.surahs.filter((s) => this.index.surahs[String(s.id)]).map((s) =>
+        el("option", { value: s.id, selected: String(s.id) === f.surah }, `${ar(s.id)}. ${s.name} (${ar(this.index.surahs[String(s.id)])})`)));
+    const juzSel = el("select", { id: "mut-juz" },
+      el("option", { value: "" }, "كل الأجزاء"),
+      Array.from({ length: 30 }, (_, i) => el("option", { value: i + 1, selected: String(i + 1) === f.juz }, `الجزء ${ar(i + 1)}`)));
+    const q = el("input", { id: "mut-q", type: "search", value: f.q, placeholder: "مثل: وما الله بغافل", autocomplete: "off", enterkeyhint: "search" });
+    const count = el("p", { class: "mut-count", role: "status" });
+    const list = el("div", { class: "mut-list" });
+    const more = el("button", { type: "button", class: "btn mut-moreb", hidden: true }, "عرض المزيد");
+    let results = [], shown = 0, token = 0;
+
+    const showMore = () => {
+      const next = results.slice(shown, shown + PAGE_SIZE);
+      list.append(...next.map((r) => this.item(r)));
+      shown += next.length;
+      more.hidden = shown >= results.length;
+    };
+    const run = async () => {
+      const t = ++token;
+      Object.assign(f, { surah: surahSel.value, juz: juzSel.value, q: q.value.trim() });
+      if (!f.surah && !f.juz && !f.q) {
+        results = [];
+        list.replaceChildren(el("p", { class: "mut-empty" }, "اختر سورة أو جزءًا، أو اكتب كلمات من الآية."));
+        count.textContent = "";
+        more.hidden = true;
+        return;
+      }
+      count.textContent = f.q && !f.surah && !f.juz ? "جارٍ البحث في القرآن كله…" : "جارٍ التحميل…";
+      let found;
+      try { found = await this.find(f); } catch (e) { if (t === token) count.textContent = e.message; return; }
+      if (t !== token) return;
+      results = found;
+      shown = 0;
+      list.replaceChildren();
+      count.textContent = found.length ? counted(found.length, PLACES) : "لا مواضع بهذا البحث. جرّب كلمات أقل.";
+      showMore();
+    };
+    surahSel.addEventListener("change", () => { if (surahSel.value) juzSel.value = ""; run(); });
+    juzSel.addEventListener("change", () => { if (juzSel.value) surahSel.value = ""; run(); });
+    let typing = 0;
+    q.addEventListener("input", () => { clearTimeout(typing); typing = setTimeout(run, 300); });
+    more.addEventListener("click", showMore);
+    run();
+
+    return this.section("browse", 2, "ابحث وقارن", "اختر سورة أو جزءًا، أو اكتب كلمات من الآية. اضغط على أي موضع لترى الفرق.",
+      el("div", { class: "mut-filter", role: "search" },
+        el("label", { class: "mut-field" }, el("span", {}, "السورة"), surahSel),
+        el("label", { class: "mut-field" }, el("span", {}, "الجزء"), juzSel),
+        el("label", { class: "mut-field mut-field--q" }, el("span", {}, "كلمات من الآية"), q)),
+      count, list, more);
+  }
+
+  /** Every group matching the filter, in the mushaf's order: [{d, g}]. */
+  async find({ surah, juz, q }) {
+    let ids = Object.keys(this.index.surahs).map(Number);
+    let inJuz = null;
+    if (surah) ids = [+surah];
+    else if (juz) {
+      const idx = await mushafIndex();
+      const from = idx.juz[juz - 1], to = juz < 30 ? idx.juz[juz] - 1 : 604;
+      ids = ids.filter((s) => { const p = this.meta.get(s)?.pages; return p && p[0] <= to && p[1] >= from; });
+      const pageOf = new Map();
+      idx.pages.forEach((list, i) => list.forEach(([s, a]) => pageOf.set(`${s}:${a}`, i + 1)));
+      inJuz = (k) => { const p = pageOf.get(k); return p >= from && p <= to; };
+    }
+    const key = q ? searchKey(q) : "";
+    const data = await Promise.all(ids.map((s) => mutStore.surah(s)));
+    const out = [];
+    for (const d of data) for (const g of d.groups) {
+      if (inJuz && !inJuz(g.src[0])) continue;
+      // the words may be in the ayah itself or in one of its similar places
+      const hit = (keys) => searchKey(keys.flatMap((k) => d.text[k] || []).join(" ")).includes(key);
+      if (key && !hit(g.src) && !g.muts.some(hit)) continue;
+      out.push({ d, g });
+    }
+    return out;
+  }
+
+  /** One place: its reference and opening words; the comparison opens on demand. */
+  item({ d, g }) {
+    const words = g.src.flatMap((k) => d.text[k] || []);
+    const det = el("details", { class: "mut-item" },
+      el("summary", {},
+        el("span", { class: "mut-item__top" },
+          el("span", { class: "mut-ref" }, this.ref(g.src)),
+          g.notes ? el("span", { class: "tag" }, "له ضابط") : null,
+          el("span", { class: "mut-item__n muted" }, counted(g.muts.length, MATES))),
+        el("span", { class: "mut-item__text" }, words.slice(0, 7).join(" ") + (words.length > 7 ? " …" : "")),
+        el("span", { class: "mut-item__with muted" }, `يشبهها: ${g.muts.map((m) => this.ref(m)).join("، ")}`)));
+    det.addEventListener("toggle", () => {
+      if (!det.open || det.dataset.done) return;
+      det.dataset.done = "1";
+      det.append(el("div", { class: "mut-item__body" },
+        ...g.muts.map((m, i) => this.comparison(d.text, g.src, m, g.ctx, g.notes?.[i], { here: false })),
+        this.link(g.src, "افتح الموضع في صفحة القراءة")));
+    });
+    return det;
+  }
+
+  // ── practice ─────────────────────────────────────────
   practiceSection() {
-    const scopes = [["juz30", "جزء عمّ وتبارك", (s) => s >= 67], ["mufassal", "المفصّل (ق إلى الناس)", (s) => s >= 50],
-      ["sel", "السورة المختارة في التصفّح", null], ["all", "القرآن كله", () => true]];
-    const sel = el("select", { "aria-label": "نطاق التدريب" }, scopes.map(([v, t]) => el("option", { value: v }, t)));
+    const scopes = [["sel", "ما اخترته في البحث"], ["juz30", "جزء عمّ وتبارك"], ["mufassal", "المفصّل (ق إلى الناس)"], ["all", "القرآن كله"]];
+    const sel = el("select", { id: "mut-scope" }, scopes.map(([v, t]) => el("option", { value: v }, t)));
     const box = el("div", { class: "mut-quiz", "aria-live": "polite" });
     const start = el("button", { type: "button", class: "btn btn--primary" }, "ابدأ ١٠ أسئلة");
     start.addEventListener("click", async () => {
-      const [, , fit] = scopes.find(([v]) => v === sel.value);
-      const ids = Object.keys(this.index.surahs).map(Number).filter((s) => (fit ? fit(s) : s === this.browseSurah));
       box.replaceChildren(el("p", { class: "muted" }, "جارٍ التحضير…"));
-      const data = await Promise.all(ids.map((s) => mutStore.surah(s)));
-      const pool = [];
-      for (const d of data) for (const g of d.groups) g.muts.forEach((m) => pool.push({ d, g, m }));
-      shuffle(pool);
+      let pool;
+      try {
+        if (sel.value === "sel") pool = await this.find(this.filter.surah || this.filter.juz || this.filter.q ? this.filter : { surah: "2" });
+        else {
+          const fit = { juz30: (s) => s >= 67, mufassal: (s) => s >= 50, all: () => true }[sel.value];
+          const data = await Promise.all(Object.keys(this.index.surahs).map(Number).filter(fit).map((s) => mutStore.surah(s)));
+          pool = data.flatMap((d) => d.groups.map((g) => ({ d, g })));
+        }
+      } catch (e) { box.replaceChildren(el("p", {}, e.message)); return; }
+      const pairs = shuffle(pool.flatMap(({ d, g }) => g.muts.map((m) => ({ d, g, m }))));
       const qs = [];
-      for (const it of pool) {
+      for (const it of pairs) {
         if (qs.length >= 10) break;
         const A = blockWords(it.d.text, it.g.src), B = blockWords(it.d.text, it.m);
         const q = question(A.words, B.words);
@@ -269,8 +367,9 @@ export class MutView extends MutBase {
       if (!qs.length) { box.replaceChildren(el("p", {}, "لا أسئلة في هذا النطاق. اختر نطاقًا أوسع.")); return; }
       this.quiz(box, qs);
     });
-    return this.section("practice", "تدرّب", "يُخفى موضع الفرق من آية، وتختار اللفظ الذي في هذه الآية من بين لفظ الموضعين. بعد الإجابة ترى الموضع الآخر.",
-      el("div", { class: "mut-practice__bar" }, el("label", { class: "mut-pick" }, el("span", {}, "النطاق"), sel), start), box);
+    return this.section("practice", 3, "تدرّب", "يُخفى موضع الفرق من الآية، فتختار اللفظ الصحيح من لفظَي الموضعين، ثم ترى الموضع الآخر.",
+      el("div", { class: "mut-filter mut-filter--practice" },
+        el("label", { class: "mut-field" }, el("span", {}, "النطاق"), sel), start), box);
   }
 
   quiz(box, qs) {

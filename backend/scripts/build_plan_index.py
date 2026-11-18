@@ -2,6 +2,10 @@
 page needs to cut the Quran into daily portions without loading every surah.
 
   {"juz": [1, 22, 42, ...],                     start page of each juz (30)
+   "hizb": [[page, s, a], ...],                 first ayah of each hizb (60)
+   "names": ["بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ", ...],   each page's first three words in the
+                                                mushaf's spelling: how huffaz name
+                                                a page (604)
    "pages": [[[s, a, ln], ...], ...]}           per page (604): every ayah that
                                                 starts on it, with the line of
                                                 its first word (1-15)
@@ -15,6 +19,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -26,13 +31,33 @@ from app.services import quran_api  # noqa: E402
 from app.services.cache import close_client  # noqa: E402
 
 PAGES = 604
+# pause signs, the hizb-quarter sign and joiners are not part of the words that name a page
+PAUSES = re.compile("[\u06D6-\u06DC\u06DE\u200C\u200D]")
+
+
+def page_names(pages: list[list[list[int]]], words: dict[str, list[str]]) -> list[str]:
+    """First three words of each page in the mushaf's (Uthmani) spelling, from the ayahs that start on it."""
+    names = []
+    for p in pages:
+        out: list[str] = []
+        for s, a, _ in p:
+            out += [PAUSES.sub("", w).strip() for w in words[f"{s}:{a}"]]
+            if len(out) >= 3:
+                break
+        names.append(" ".join(out[:3]))
+    return names
 
 
 def build(surahs: list[dict]) -> dict:
     pages: list[list[list[int]]] = [[] for _ in range(PAGES)]
     juz = [0] * 30
+    hizb: list[list[int]] = [[] for _ in range(60)]
+    texts: dict[str, list[str]] = {}
     for s in surahs:
         for v in s["verses"]:
+            if v.get("hizb") and not hizb[v["hizb"] - 1]:
+                hizb[v["hizb"] - 1] = [v["page"], s["id"], v["n"]]
+            texts[f"{s['id']}:{v['n']}"] = [w["text"] for w in v["words"]]
             words = [w for w in v["words"] if w.get("ln")]
             first = words[0] if words else None
             line = first["ln"] if first else v.get("end_ln") or 1
@@ -43,7 +68,8 @@ def build(surahs: list[dict]) -> dict:
         p.sort()
     assert all(pages), "every page has at least one ayah"
     assert all(juz) and juz == sorted(juz), juz
-    return {"juz": juz, "pages": pages}
+    assert all(hizb) and hizb == sorted(hizb), hizb
+    return {"juz": juz, "hizb": hizb, "names": page_names(pages, texts), "pages": pages}
 
 
 async def main() -> None:

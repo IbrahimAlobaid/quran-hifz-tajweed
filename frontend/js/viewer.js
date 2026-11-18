@@ -2,15 +2,25 @@
  * The reading page as a gallery-style viewer: a top bar (back to the page
  * grid, title, tools), the page, previous / next page buttons and the player
  * at the bottom, a floating tajweed button, and a bottom sheet holding the
- * tajweed / tafsir / similar-verses panels. Pen marks and the five switches
- * live in localStorage. main.js keeps the selection, the player and the panels.
+ * tajweed / tafsir / similar-verses panels. The bars hide while you read and
+ * a tap on the page brings them back. Pages turn like a photo carousel: the
+ * neighbouring pages are rendered beside the page and follow the finger.
+ * Pen marks and the five switches live in localStorage. main.js keeps the
+ * selection, the player and the panels.
  */
 import { juzName, mushafIndex } from "./mushaf-meta.js";
 import { ar, el } from "./util.js";
 
 const MARKS_KEY = "hifz.marks.v1";
+const HINT_KEY = "hifz.barsHint.v1";
 const $ = (id) => document.getElementById(id);
 const wide = () => matchMedia("(min-width: 1200px)").matches;
+const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// the carousel: how far, how fast, and the deceleration a page settles with
+const COMMIT_FRACTION = 0.45;   // of the page width
+const FLICK_SPEED = 0.45;       // px per ms, measured over the last 100 ms
+const EASE = "cubic-bezier(.22, .8, .3, 1)"; // eases out, never overshoots
 
 export const pen = {
   load() { try { return new Set(JSON.parse(localStorage.getItem(MARKS_KEY) || "[]")); } catch { return new Set(); } },
@@ -19,7 +29,7 @@ export const pen = {
 
 export class Viewer {
   /**
-   * opts: settings, save, surahs, goPage(P), openSurah(id), mushaf (element),
+   * opts: settings, save, surahs, goPage(P) → Promise, openSurah(id), preload(P) → Promise,
    * words() → Map "s:n:p" → element, onSettings(changed), sheetTab(v)
    */
   constructor(opts) {
@@ -29,6 +39,8 @@ export class Viewer {
     this.sheetState = "closed";
     this.index = null;
     this.page = null;
+    this.settling = false;
+    this.suppressClick = false;
 
     $("v-grid").addEventListener("click", () => this.openGrid());
     $("grid-close").addEventListener("click", () => this.closeGrid());
@@ -67,38 +79,14 @@ export class Viewer {
     });
 
     // sheet
-    $("fab-tj").addEventListener("click", () => { this.sheetTab("tajweed"); this.openSheet(); });
-    $("peek").addEventListener("click", () => this.openSheet());
+    // the floating button opens the panel on its first enabled tab (tajweed, else tafsir, else similar verses)
+    $("fab-tj").addEventListener("click", () => { this.sheetTab(this.firstPanel()); this.openSheet(); });
     $("sheet-close").addEventListener("click", () => this.setSheet("closed"));
     this.dragSheet();
     matchMedia("(min-width: 1200px)").addEventListener("change", () => this.setSheet(this.sheetState));
 
-    // previous / next page, and swiping the page (finger or mouse) as in a printed
-    // mushaf: drag towards the right for the next page, towards the left for the previous
-    $("pg-prev").addEventListener("click", () => this.step(-1));
-    $("pg-next").addEventListener("click", () => this.step(1));
-    let sx = null, sy = 0;
-    const stage = $("stage"), wrap = $("mushaf-wrap");
-    stage.addEventListener("pointerdown", (e) => {
-      if (e.button !== 0 || this.penOn || e.target.closest("button, input, select, a")) return;
-      if (e.pointerType === "mouse") e.preventDefault(); // no text selection while dragging
-      sx = e.clientX; sy = e.clientY;
-    });
-    stage.addEventListener("pointermove", (e) => {
-      if (sx == null) return;
-      const dx = e.clientX - sx;
-      if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(e.clientY - sy)) wrap.style.transform = `translateX(${dx * 0.25}px)`;
-    });
-    const release = (e) => {
-      if (sx == null) return;
-      const dx = e.clientX - sx, dy = e.clientY - sy;
-      sx = null;
-      wrap.style.removeProperty("transform");
-      if (e.type === "pointerup" && Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.6) this.step(dx > 0 ? 1 : -1);
-    };
-    stage.addEventListener("pointerup", release);
-    stage.addEventListener("pointercancel", release);
-    stage.addEventListener("pointerleave", release);
+    this.carousel();
+    this.bars();
 
     // the page leaves room for the dock (sheet handle, page buttons, player) whatever its height
     const dock = $("dock");
@@ -108,8 +96,143 @@ export class Viewer {
     this.setSheet(wide() && this.settings.panelOpen !== false ? "half" : "closed");
   }
 
-  step(dir) {
-    if (this.page) this.goPage(Math.min(604, Math.max(1, this.page + dir)));
+  canStep(dir) { return !!this.page && !this.settling && this.page + dir >= 1 && this.page + dir <= 604; }
+
+  /** The neighbour page in direction dir is rendered and ready to slide in. */
+  ready(dir) { return !!$(`pslot-${dir > 0 ? "next" : "prev"}`).dataset.page; }
+
+  // ── the carousel ─────────────────────────────────────
+  /**
+   * Swipe the page as in a photo carousel. The page follows the finger 1:1
+   * with its neighbour coming in from the side (drag right for the next page,
+   * left for the previous, as in a printed mushaf). On release it moves on
+   * past ~half the width or on a quick flick, and settles back otherwise.
+   * Vertical drags scroll the page as usual; the pen turns swiping off.
+   */
+  carousel() {
+    const stage = $("stage"), track = $("ptrack");
+    let g = null;
+    const offset = (dx) => {
+      const dir = dx > 0 ? 1 : -1;
+      if (this.canStep(dir) && this.ready(dir)) return dx;
+      return (dx / (1 + Math.abs(dx) / 120)) * 0.5; // the first and last page resist, then come back
+    };
+    stage.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0 || this.penOn || this.settling || e.target.closest("button, input, select, a, .state")) return;
+      if (e.pointerType === "mouse") e.preventDefault(); // no text selection while dragging
+      g = { id: e.pointerId, x0: e.clientX, y0: e.clientY, dx: 0, axis: null, pts: [[e.timeStamp, e.clientX]] };
+    });
+    stage.addEventListener("pointermove", (e) => {
+      if (!g || e.pointerId !== g.id) return;
+      const dx = e.clientX - g.x0, dy = e.clientY - g.y0;
+      if (!g.axis) {
+        if (Math.hypot(dx, dy) < 8) return;
+        g.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+        if (g.axis === "y") { g = null; return; }
+        try { stage.setPointerCapture(e.pointerId); } catch { /* the pointer is already gone */ }
+        track.classList.remove("is-settling");
+      }
+      g.dx = dx;
+      g.pts.push([e.timeStamp, e.clientX]);
+      while (g.pts.length > 2 && e.timeStamp - g.pts[0][0] > 100) g.pts.shift();
+      track.style.transform = `translateX(${offset(dx)}px)`;
+    });
+    const release = (e) => {
+      if (!g || e.pointerId !== g.id) return;
+      const { dx, axis, pts } = g;
+      g = null;
+      if (axis !== "x") return;
+      this.suppressClick = true; // the click that follows a drag is not a tap
+      setTimeout(() => { this.suppressClick = false; }, 0);
+      const [t0, x0] = pts[0], [t1, x1] = pts.at(-1);
+      const v = t1 > t0 ? (x1 - x0) / (t1 - t0) : 0;
+      const dir = dx > 0 ? 1 : -1;
+      const W = track.offsetWidth;
+      const go = e.type === "pointerup" && this.canStep(dir) && this.ready(dir) &&
+        (Math.abs(dx) > W * COMMIT_FRACTION || (Math.abs(v) > FLICK_SPEED && Math.sign(v) === dir && Math.abs(dx) > 16));
+      if (go) this.slide(dir, offset(dx), Math.abs(v));
+      else this.settle(0, offset(dx));
+    };
+    stage.addEventListener("pointerup", release);
+    stage.addEventListener("pointercancel", release);
+  }
+
+  /** Move the track from `from` px to `to` px with a decelerating ease; resolves when it stops. */
+  settle(to, from, speed = 0) {
+    const track = $("ptrack");
+    const dist = Math.abs(to - from);
+    if (reduced() || dist < 1) {
+      track.classList.remove("is-settling");
+      track.style.transform = to ? `translateX(${to}px)` : "";
+      return Promise.resolve();
+    }
+    // a fast flick finishes sooner; a slow release still takes a short, calm glide
+    const ms = Math.round(Math.min(380, Math.max(180, dist / Math.max(speed, dist / 340))));
+    track.style.setProperty("--settle", `${ms}ms`);
+    track.style.setProperty("--ease", EASE);
+    track.classList.add("is-settling");
+    track.style.transform = `translateX(${to}px)`;
+    return new Promise((done) => {
+      const end = () => { clearTimeout(t); track.removeEventListener("transitionend", end); done(); };
+      const t = setTimeout(end, ms + 60);
+      track.addEventListener("transitionend", end);
+    });
+  }
+
+  /** Slide to the neighbour page (dir 1 = next), load it, then put the track back under it. */
+  async slide(dir, from = 0, speed = 0) {
+    const track = $("ptrack");
+    const P = this.page + dir;
+    this.settling = true;
+    try {
+      if (this.ready(dir)) await this.settle(dir * track.offsetWidth, from, speed);
+      await this.goPage(P);
+    } finally {
+      track.classList.remove("is-settling");
+      track.style.transform = "";
+      this.settling = false;
+      this.preload?.(this.page);
+    }
+  }
+
+  // ── the bars: hidden while reading, a tap on the page shows them ──
+  bars() {
+    $("stage").addEventListener("click", (e) => {
+      if (this.suppressClick) { this.suppressClick = false; e.stopPropagation(); return; }
+      if (this.penOn || e.target.closest("button, a, input, select")) return;
+      if (this.barsHidden) { this.showBars(true); e.stopPropagation(); return; } // the first tap only brings the bars back
+      if (!e.target.closest(".w, .ayah-end")) this.showBars(false);
+    }, true);
+    // keyboard: Tab brings the bars back so their buttons can be reached
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Tab" && this.barsHidden && document.body.classList.contains("in-hifz")) this.showBars(true);
+    });
+    for (const id of ["vtop", "dock"]) $(id).addEventListener("focusin", () => this.showBars(true));
+  }
+
+  get barsHidden() { return document.body.classList.contains("bars-hidden"); }
+
+  /** Show or hide the bars; they stay while the pen, the menu, the sheet (on a phone) or a dialog is open. */
+  showBars(show) {
+    if (!show) {
+      const busy = this.penOn || !$("v-menu").hidden || document.querySelector("dialog[open]") ||
+        (!wide() && this.sheetState !== "closed");
+      if (busy) return;
+    }
+    document.body.classList.toggle("bars-hidden", !show);
+    $("bars-hint").hidden = true;
+  }
+
+  /** Entering the reading page: the page alone, and once ever a hint on how to bring the bars back. */
+  enter() {
+    this.showBars(false);
+    if (!this.barsHidden) return;
+    let seen = true;
+    try { seen = !!localStorage.getItem(HINT_KEY); localStorage.setItem(HINT_KEY, "1"); } catch { /* storage unavailable */ }
+    if (seen) return;
+    const hint = $("bars-hint");
+    hint.hidden = false;
+    setTimeout(() => { hint.hidden = true; }, 4000);
   }
 
   // ── title, page buttons ──────────────────────────────
@@ -118,10 +241,8 @@ export class Viewer {
     $("v-title").textContent = `سورة ${surahName}`;
     $("v-sub").textContent = [juz ? juzName(juz) : null, page ? `الصفحة ${ar(page)}` : null, ayah ? `الآية ${ar(ayah)}` : null].filter(Boolean).join("، ");
     if (!page) return;
+    if (page !== this.page && !this.settling) this.preload?.(page);
     this.page = page;
-    $("pg-label").textContent = `${ar(page)} / ${ar(604)}`;
-    $("pg-prev").disabled = page <= 1;
-    $("pg-next").disabled = page >= 604;
   }
 
   // ── page grid (the back button) ──────────────────────
@@ -150,9 +271,11 @@ export class Viewer {
         const end = j < 29 ? this.index.juz[j + 1] - 1 : 604;
         const tiles = [];
         for (let p = start; p <= end; p++) {
+          // a page is named by its first three words, as huffaz name it; the surah and number go small below
           const s = this.index.pages[p - 1][0][0];
-          tiles.push(el("button", { type: "button", class: "gtile" + (p === this.page ? " is-current" : ""), onclick: go(p), "aria-label": `الصفحة ${ar(p)}، سورة ${names.get(s)}` },
-            el("span", { class: "thumb__lines", "aria-hidden": "true" }), el("b", {}, ar(p)), el("small", {}, names.get(s))));
+          const name = this.index.names?.[p - 1] || ar(p);
+          tiles.push(el("button", { type: "button", class: "gtile" + (p === this.page ? " is-current" : ""), onclick: go(p), "aria-label": `${name}، الصفحة ${ar(p)}، سورة ${names.get(s)}` },
+            el("span", { class: "thumb__lines", "aria-hidden": "true" }), el("b", {}, name), el("small", {}, `${names.get(s)} · ${ar(p)}`)));
         }
         const here = this.page >= start && this.page <= end;
         return el("details", { class: "gjuz", open: here || null },
@@ -180,7 +303,7 @@ export class Viewer {
     sheet.dataset.state = state;
     sheet.style.removeProperty("--drag");
     sheet.inert = state === "closed";
-    $("peek").setAttribute("aria-expanded", String(state !== "closed"));
+    $("fab-tj").setAttribute("aria-expanded", String(state !== "closed"));
     document.body.classList.toggle("panel-open", state !== "closed");
     if (wide()) this.save({ panelOpen: state !== "closed" });
   }
@@ -216,9 +339,12 @@ export class Viewer {
 
   hasPanels() { const s = this.settings; return s.showTajweed || s.showTafsir || s.showMut; }
 
+  firstPanel() { const s = this.settings; return s.showTajweed ? "tajweed" : s.showTafsir ? "tafsir" : "mut"; }
+
   // ── pen ──────────────────────────────────────────────
   setPen(on) {
     this.penOn = on;
+    if (on) this.showBars(true);
     $("v-pen").setAttribute("aria-pressed", String(on));
     $("pen-bar").hidden = !on;
     document.body.classList.toggle("pen-on", on);
@@ -235,13 +361,15 @@ export class Viewer {
     return true;
   }
 
-  paintMarks() {
+  /** Underline the marked words of the page (or of a neighbour page's `words`). */
+  paintMarks(words = null) {
     let n = 0;
-    for (const [k, w] of this.words()) {
+    for (const [k, w] of words || this.words()) {
       const on = this.marks.has(k);
       w.classList.toggle("is-marked", on);
       if (on) n++;
     }
+    if (words) return;
     $("pen-count").textContent = n ? `(${ar(n)})` : "";
     $("pen-clear").disabled = !n;
   }
@@ -285,9 +413,11 @@ export class Viewer {
     $("tab-tajweed").hidden = !s.showTajweed;
     $("tab-tafsir").hidden = !s.showTafsir;
     $("tab-mut").hidden = !s.showMut;
-    $("fab-tj").hidden = !s.showTajweed;
-    $("peek").hidden = !this.hasPanels();
-    $("peek-label").textContent = [s.showTajweed && "التجويد", s.showTafsir && "التفسير", s.showMut && "المتشابهات"].filter(Boolean).join(" · ");
+    $("fab-tj").hidden = !this.hasPanels();
+    const name = { tajweed: "التجويد", tafsir: "التفسير", mut: "المتشابهات" }[this.firstPanel()];
+    $("fab-label").textContent = name;
+    $("fab-tj").setAttribute("aria-label", `افتح لوحة ${name}`);
+    $("fab-tj").title = `لوحة ${name}`;
     document.querySelector(".player").hidden = !s.withReciter;
     if (!this.hasPanels()) this.setSheet("closed");
   }
