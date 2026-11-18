@@ -23,10 +23,13 @@ export class Player extends EventTarget {
     this._raf = 0;
     this._gapTimer = 0;
     audio.addEventListener("ended", () => this.playing && this._onAyahEnd());
-    // rAF stops in background tabs; timeupdate (~4 Hz) keeps the repetition
-    // engine running when the user listens with the tab hidden.
+    // rAF stops in background tabs, and also when the window is covered or not
+    // being painted (the page then still reports itself visible). timeupdate
+    // (~4 Hz) keeps tracking and the repetition engine running in both cases.
+    this._lastFrame = 0;
     audio.addEventListener("timeupdate", () => {
-      if (this.playing && !this.inGap && document.hidden) this._tick();
+      const stalled = performance.now() - this._lastFrame > 250;
+      if (this.playing && !this.inGap && (document.hidden || stalled)) this._tick();
     });
     audio.addEventListener("error", () => this._emit("error", { message: "تعذّر تحميل ملف الصوت. تحقّق من الاتصال ثم أعد المحاولة." }));
     audio.addEventListener("waiting", () => this._emit("buffering", { on: true }));
@@ -137,6 +140,7 @@ export class Player extends EventTarget {
     cancelAnimationFrame(this._raf);
     const step = () => {
       if (!this.playing) return;
+      this._lastFrame = performance.now();
       this._tick();
       if (this.playing && !this.inGap) this._raf = requestAnimationFrame(step);
     };
