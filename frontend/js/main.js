@@ -14,7 +14,7 @@ import { Viewer } from "./viewer.js";
 const PAGES = 604;
 const $ = (id) => document.getElementById(id);
 const ui = {
-  surah: $("surah"), juz: $("juz"), from: $("from"), to: $("to"), reciter: $("reciter"), page: $("page"),
+  surah: $("surah"), juz: $("juz"), hizb: $("hizb"), ayah: $("ayah"), from: $("from"), to: $("to"), reciter: $("reciter"), page: $("page"),
   unit: $("unit"), rangeCtl: $("range-ctl"), pageCtl: $("page-ctl"), pageNav: $("page-nav"), pageNavLabel: $("page-nav-label"),
   ayahRepeat: $("ayah-repeat"), rangeRepeat: $("range-repeat"), gap: $("gap"), rate: $("rate"),
   mushaf: $("mushaf"), state: $("state"), play: $("play"), prev: $("prev"), next: $("next"),
@@ -106,20 +106,73 @@ function syncUnitControls() {
   ui.rangeCtl.hidden = page;
   ui.pageCtl.hidden = !page;
   ui.juz.closest(".field").hidden = !page;
-  ui.surah.closest(".field").hidden = page;
+  ui.hizb.closest(".field").hidden = !page;
 }
 
-/** The viewer bar's title, the juz picker and the thumbnail strip follow the current ayah. */
+/** The viewer bar's title and the juz / hizb / ayah pickers follow the current ayah. */
 function updateViewer() {
   const seg = cur();
   if (!seg || !viewer) return;
   const a = view.ayahData(seg.s.id, player.cur);
   const page = isPage() ? settings.page : a?.page;
   if (a?.juz) ui.juz.value = a.juz;
+  if (a?.hizb) ui.hizb.value = a.hizb;
+  if (ui.ayah.dataset.s !== String(seg.s.id)) {
+    ui.ayah.dataset.s = seg.s.id;
+    ui.ayah.replaceChildren(...Array.from({ length: seg.s.ayahs }, (_, i) => el("option", { value: i + 1 }, ar(i + 1))));
+    $("ayah-label").textContent = `الآية من سورة ${seg.s.name}`;
+  }
+  ui.ayah.value = player.cur;
   viewer.update({ surahName: seg.s.name, page, juz: a?.juz, ayah: player.cur });
 }
 
+/** Open mushaf page P with ayah `at` {s, n} current (the hizb and ayah pickers). */
+function openAt(P, at) {
+  P = clampPage(P);
+  if (isPage() && P === settings.page && segs.length) return goToAyah(at.s, at.n);
+  if (!isPage()) setUnitUI?.("page");
+  save({ unit: "page", page: P });
+  player.stop();
+  return loadSelection({ at });
+}
+
 const tajweedOn = () => settings.tajweed && settings.showTajweed;
+
+/** The segments of mushaf page P: the part of each surah printed on it. */
+async function segsForPage(P) {
+  const metas = surahs.filter((m) => m.pages && m.pages[0] <= P && P <= m.pages[1]);
+  const list = await Promise.all(metas.map((m) => api.surah(m.id)));
+  return list.map((s) => {
+    const vs = s.verses.filter((v) => v.page === P);
+    return vs.length ? { s, from: vs[0].n, to: vs.at(-1).n } : null;
+  }).filter(Boolean);
+}
+
+/** The previous and next pages, rendered beside the page so a swipe shows them coming in. */
+const slotViews = {};
+let slotToken = 0;
+async function renderNeighbors(P) {
+  const token = ++slotToken;
+  await Promise.all([["prev", P - 1], ["next", P + 1]].map(async ([k, Q]) => {
+    const slot = $(`pslot-${k}`);
+    const frame = slot.querySelector(".mushaf-frame");
+    const v = (slotViews[k] ||= new MushafView({
+      root: slot.querySelector(".mushaf"), head: slot.querySelector(".surah-head"), wrap: frame, foot: slot.querySelector(".page-num"),
+    }));
+    slot.dataset.page = "";
+    if (Q < 1 || Q > PAGES) { slot.hidden = true; return; }
+    let sg;
+    try { sg = await segsForPage(Q); } catch { return; } // offline: the swipe still works, the page loads after it
+    if (token !== slotToken) return;
+    slot.hidden = false;
+    v.render(sg, { layout: "page", page: Q });
+    slot.dataset.page = Q;
+    v.setMode(settings.hideMode);
+    v.root.classList.toggle("tj-on", tajweedOn());
+    viewer.paintMarks(v.words);
+    muts.mark(sg, v.root);
+  }));
+}
 
 // ── loading ────────────────────────────────────────────
 /** @param at {s, n} — ayah to keep current if it is in the new selection */
@@ -133,12 +186,7 @@ async function loadSelection({ at = null } = {}) {
     if (isPage()) {
       const P = clampPage(settings.page);
       ui.page.value = P;
-      const metas = surahs.filter((m) => m.pages && m.pages[0] <= P && P <= m.pages[1]);
-      const list = await Promise.all(metas.map((m) => api.surah(m.id)));
-      next = list.map((s) => {
-        const vs = s.verses.filter((v) => v.page === P);
-        return vs.length ? { s, from: vs[0].n, to: vs.at(-1).n } : null;
-      }).filter(Boolean);
+      next = await segsForPage(P);
       save({ page: P });
       ui.pageNavLabel.textContent = `الصفحة ${ar(P)} من ${ar(PAGES)}`;
     } else {
@@ -254,10 +302,10 @@ async function goToAyah(s, n) {
 
 function goPage(P) {
   P = clampPage(P);
-  if (P === settings.page && segs.length) return;
+  if (P === settings.page && segs.length) return Promise.resolve();
   save({ page: P });
   player.stop();
-  loadSelection();
+  return loadSelection();
 }
 
 // ── wiring ─────────────────────────────────────────────
@@ -333,9 +381,9 @@ ui.progress.addEventListener("pointermove", (e) => { if (e.buttons) seekFromPoin
 ui.surah.addEventListener("change", () => {
   const n = +ui.surah.value;
   const meta = surahs.find((s) => s.id === n);
+  if (isPage()) return openAt(meta.pages[0], { s: n, n: 1 }); // its first page, on its first ayah
   save({ surah: n });
   player.stop();
-  if (isPage()) { save({ page: meta.pages[0] }); return loadSelection(); }
   ui.from.value = 1;
   ui.to.value = Math.min(meta.ayahs, 7);
   loadSelection();
@@ -343,6 +391,22 @@ ui.surah.addEventListener("change", () => {
 for (const inp of [ui.from, ui.to]) inp.addEventListener("change", () => { player.stop(); loadSelection(); });
 ui.page.addEventListener("change", () => goPage(ui.page.value));
 ui.juz.addEventListener("change", async () => goPage((await mushafIndex()).juz[+ui.juz.value - 1]));
+ui.hizb.addEventListener("change", async () => {
+  const [P, s, n] = (await mushafIndex()).hizb[+ui.hizb.value - 1];
+  openAt(P, { s, n });
+});
+ui.ayah.addEventListener("change", () => {
+  const seg = cur();
+  if (!seg) return;
+  const s = seg.s, n = +ui.ayah.value;
+  if (isPage()) return openAt(s.verses.find((v) => v.n === n).page, { s: s.id, n });
+  // an ayah range starts from the chosen ayah and keeps its length when it can
+  const len = Math.max(0, settings.to - settings.from);
+  ui.from.value = n;
+  ui.to.value = Math.min(s.ayahs, n + len);
+  player.stop();
+  loadSelection({ at: { s: s.id, n } });
+});
 $("page-prev").addEventListener("click", () => goPage(settings.page - 1));
 $("page-next").addEventListener("click", () => goPage(settings.page + 1));
 ui.pageNav.addEventListener("click", (e) => {
@@ -489,6 +553,7 @@ function route() {
   document.querySelectorAll(".mainnav a").forEach((a) =>
     a.setAttribute("aria-current", String(a.dataset.view === page ? "page" : "false")));
   if (page !== "hifz") player.pause();
+  else viewer?.enter(); // the reading page opens on the page alone
   if (page === "learn") learn?.show(parts.slice(1)); else learn?.hide();
   if (page === "plan") plans?.show(parts[1]);
   if (page === "mut") mutView?.show(parts[1]);
@@ -528,6 +593,7 @@ async function boot() {
     ui.to.value = settings.to;
     ui.page.value = settings.page;
     ui.juz.replaceChildren(...Array.from({ length: 30 }, (_, i) => el("option", { value: i + 1 }, `الجزء ${ar(i + 1)}`)));
+    ui.hizb.replaceChildren(...Array.from({ length: 60 }, (_, i) => el("option", { value: i + 1 }, `الحزب ${ar(i + 1)}`)));
 
     panel = new TajweedPanel({
       catalog, legend: $("legend"), wordBox: $("word-audit"), ayahBox: $("ayah-audit"), ayahBadge: $("ayah-badge"),
@@ -550,8 +616,9 @@ async function boot() {
         save({ unit: "page", page: clampPage(P) }); // from an ayah range to that page
         setUnitUI?.("page");
         player.stop();
-        loadSelection();
+        return loadSelection();
       },
+      preload: renderNeighbors,
       openSurah: (id) => {
         const meta = surahs.find((m) => m.id === id);
         if (isPage()) return goPage(meta.pages[0]);

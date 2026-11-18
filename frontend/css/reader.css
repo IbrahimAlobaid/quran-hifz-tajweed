@@ -16,7 +16,7 @@
   word-spacing: 0;
 }
 .mushaf--page .line { white-space: nowrap; text-align: justify; text-align-last: justify; }
-.mushaf--page .line--short, .page--opening .line { text-align-last: center; }
+.page--opening .line { text-align-last: center; } /* only the first two pages are centred in the printed mushaf */
 .mushaf--page.is-measuring { width: auto; }
 .mushaf--page.page--reflow { font-size: var(--q-size); line-height: 2.25; text-align: justify; text-align-last: center; }
 .page--reflow .line { display: inline; white-space: normal; }

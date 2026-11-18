@@ -48,6 +48,8 @@
   </header>
 
   <div id="view-hifz" class="viewer">
+  <!-- the bars hide while you read; a tap on the page brings them back -->
+  <div class="vtop" id="vtop">
   <header class="vbar" aria-label="أدوات القراءة">
     <button type="button" class="vbtn" id="v-grid" aria-label="صفحات المصحف حسب الأجزاء" title="صفحات المصحف"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
     <div class="vbar__title">
@@ -82,6 +84,10 @@
       <label for="juz">الجزء</label>
       <select id="juz"></select>
     </div>
+    <div class="field field--hizb">
+      <label for="hizb">الحزب</label>
+      <select id="hizb"></select>
+    </div>
     <div class="field field--surah">
       <label for="surah">السورة</label>
       <select id="surah"></select>
@@ -104,6 +110,10 @@
         <input id="page" type="number" min="1" max="604" inputmode="numeric">
         <button type="button" class="icon-btn icon-btn--sm" id="page-next" aria-label="الصفحة التالية">‹</button>
       </div>
+    </div>
+    <div class="field field--ayah">
+      <label for="ayah" id="ayah-label">الآية</label>
+      <select id="ayah"></select>
     </div>
     <div class="field field--reciter">
       <label for="reciter">القارئ</label>
@@ -158,14 +168,24 @@
         </div>
       </div>
   </div>
+  </div>
 
-  <main class="stage" id="stage">
+  <main class="vstage" id="stage">
     <div class="mushaf-wrap" id="mushaf-wrap">
+      <!-- a carousel: the previous and next pages wait on either side while you swipe -->
+      <div class="ptrack" id="ptrack">
+        <div class="pslot pslot--prev" id="pslot-prev" aria-hidden="true" inert>
+          <div class="mushaf-frame"><header class="surah-head"></header><div class="mushaf mushaf--page"></div><p class="page-num"></p></div>
+        </div>
       <div class="mushaf-frame" id="mushaf-frame">
         <header class="surah-head" id="surah-head"></header>
         <div class="mushaf" id="mushaf" aria-live="off"></div>
         <div class="state" id="state" hidden></div>
         <p class="page-num" id="page-num"></p>
+      </div>
+        <div class="pslot pslot--next" id="pslot-next" aria-hidden="true" inert>
+          <div class="mushaf-frame"><header class="surah-head"></header><div class="mushaf mushaf--page"></div><p class="page-num"></p></div>
+        </div>
       </div>
       <nav class="page-nav" id="page-nav" aria-label="تنقّل الصفحات" hidden>
         <button type="button" class="btn" data-step="-1">الصفحة السابقة</button>
@@ -175,18 +195,11 @@
     </div>
   </main>
 
-  <button type="button" class="fab" id="fab-tj" aria-label="أحكام التجويد في هذه الآية" title="أحكام التجويد في هذه الآية"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h1.5"/><path d="M8 8.5v7"/><path d="M12 5v14"/><path d="M16 9v6"/><path d="M19.5 11v2"/></svg><span>التجويد</span></button>
+  <button type="button" class="fab" id="fab-tj" aria-controls="sheet" aria-expanded="false" aria-label="افتح لوحة التجويد" title="لوحة التجويد"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h1.5"/><path d="M8 8.5v7"/><path d="M12 5v14"/><path d="M16 9v6"/><path d="M19.5 11v2"/></svg><span id="fab-label">التجويد</span></button>
+
+  <p class="bars-hint" id="bars-hint" role="status" hidden>اضغط على الصفحة لإظهار الأدوات</p>
 
   <div class="dock" id="dock">
-    <button type="button" class="peek" id="peek" aria-controls="sheet" aria-expanded="false">
-      <span class="peek__grip" aria-hidden="true"></span>
-      <span id="peek-label">التجويد · التفسير · المتشابهات</span>
-    </button>
-    <nav class="pager-bar" aria-label="تنقّل الصفحات">
-      <button type="button" class="btn pg-btn" id="pg-prev" aria-label="الصفحة السابقة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg><span>السابقة</span></button>
-      <span class="pg-label muted" id="pg-label"></span>
-      <button type="button" class="btn pg-btn" id="pg-next" aria-label="الصفحة التالية"><span>التالية</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button>
-    </nav>
   <footer class="player" aria-label="التحكم في التلاوة">
     <div class="player__progress" id="progress" role="slider" tabindex="0" aria-label="موضع التلاوة في الآية" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
       <div class="player__fill" id="progress-fill"></div>

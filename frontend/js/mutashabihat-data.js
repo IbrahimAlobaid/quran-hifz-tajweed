@@ -158,6 +158,14 @@ export function question(aWords, bWords) {
   };
 }
 
+/**
+ * A search key for typed text: letters only, with no alef at all, so plain
+ * spelling finds the mushaf spelling (الكتاب / ٱلۡكِتَٰبِ، يؤمنون / يُؤۡمِنُونَ).
+ */
+export function searchKey(text) {
+  return text.split(/\s+/).filter(Boolean).map((w) => skeleton(w).replace(/ا/g, "")).join(" ");
+}
+
 /** "2:3" → [2, 3] */
 export const parseKey = (k) => k.split(":").map(Number);
 

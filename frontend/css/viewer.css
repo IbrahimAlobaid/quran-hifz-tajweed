@@ -4,9 +4,14 @@ body.in-hifz { padding-bottom: 0; }
 body.in-hifz .topbar { display: none; } /* the reading page has its own bar */
 .viewer { --dock-h: 180px; }
 
-/* ── top bar ───────────────────────────────────────── */
+/* ── top bar (with the pen bar and the detailed options under it) ── */
+/* The bars float over the page and slide away while you read (.bars-hidden). */
+.vtop {
+  position: fixed; inset-inline: 0; top: 0; z-index: 20;
+  transition: transform 220ms ease, visibility 0s;
+}
 .vbar {
-  position: sticky; top: 0; z-index: 20;
+  position: relative;
   display: flex; align-items: center; gap: var(--space-2);
   padding: var(--space-2) var(--space-3); min-height: 60px;
   background: var(--surface-100); border-bottom: 1px solid var(--line);
@@ -38,26 +43,35 @@ body.in-hifz .topbar { display: none; } /* the reading page has its own bar */
 .vmenu hr { border: 0; border-top: 1px solid var(--line); margin: var(--space-1) 0; width: 100%; }
 
 .pen-bar {
-  position: sticky; top: 60px; z-index: 19;
+  position: relative;
   display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3);
   padding: var(--space-2) var(--space-4); background: var(--gold-soft); color: var(--ink); font-size: 14px;
 }
 .pen-bar > span { flex: 1 1 220px; }
 .pen-bar .btn--primary { height: var(--control-sm); }
 
-.detail { display: flex; flex-direction: column; gap: var(--space-3); margin: var(--space-3) clamp(12px, 3vw, 32px) 0; }
+.detail {
+  display: flex; flex-direction: column; gap: var(--space-3); max-height: min(62vh, 560px); overflow: auto; overscroll-behavior: contain;
+  padding: var(--space-3) clamp(12px, 3vw, 32px); background: var(--surface-100); border-bottom: 1px solid var(--line); box-shadow: var(--shadow-raised);
+}
 .detail .session { margin: 0; }
 .detail .reader__bar { position: static; border: 1px solid var(--line); border-radius: var(--radius-md); }
 
 /* ── the page ──────────────────────────────────────── */
-.stage { padding: var(--space-4) clamp(8px, 3vw, 32px) calc(var(--dock-h) + var(--space-6)); }
-.viewer .mushaf-wrap { max-width: 760px; margin: 0 auto; padding: 0; }
-/* the frame: a double gold rule, as round the printed page */
+.vstage { padding: var(--space-3) clamp(8px, 3vw, 32px) calc(var(--dock-h) + var(--space-6)); }
+.viewer .mushaf-wrap { max-width: 760px; margin: 0 auto; padding: 0; overflow-x: clip; }
+
+/* the carousel: the page between its neighbours, which wait just outside the view */
+.ptrack { position: relative; touch-action: pan-y; }
+.ptrack.is-settling { transition: transform var(--settle, 280ms) var(--ease, ease-out); }
+.pslot { position: absolute; top: 0; width: 100%; pointer-events: none; }
+.pslot--next { right: 100%; } /* the next page lies to the left, as in a printed mushaf */
+.pslot--prev { left: 100%; }
+/* the frame: two gold rules round the page, a light outer one and a darker rounded one */
 .mushaf-frame {
   position: relative; background: var(--surface-000);
   border: 2px solid var(--gold); border-radius: var(--radius-sm);
   outline: 1px solid var(--gold); outline-offset: 4px;
-  box-shadow: inset 0 0 0 5px var(--surface-000), inset 0 0 0 6px color-mix(in srgb, var(--gold) 55%, transparent);
   margin: 6px; padding: clamp(14px, 3vw, 24px) clamp(14px, 3.5vw, 30px) 10px;
 }
 .viewer .surah-head { margin-bottom: var(--space-3); }
@@ -68,11 +82,23 @@ body.in-hifz .topbar { display: none; } /* the reading page has its own bar */
   font-family: var(--font-display); font-size: 15px; font-weight: 600; color: var(--brand);
 }
 .page-head span:first-child { color: var(--brand); font-family: var(--font-display); }
+/* page number: centred under the text in a gold medallion, between two ruled ornaments */
 .page-num:empty { display: none; }
 .page-num {
-  display: grid; place-items: center; width: 44px; height: 30px; margin: var(--space-3) auto 2px;
-  border: 1.5px solid var(--gold); border-radius: var(--radius-pill);
-  font-size: 13.5px; font-weight: 600; color: var(--ink);
+  display: flex; align-items: center; justify-content: center; gap: 8px; margin: var(--space-3) 0 2px;
+  color: var(--gold);
+}
+.page-num::before, .page-num::after {
+  content: ""; width: min(22%, 90px); height: 7px;
+  background:
+    linear-gradient(45deg, transparent 2px, currentColor 2px 3.5px, transparent 3.5px) right center / 7px 7px no-repeat,
+    linear-gradient(currentColor, currentColor) left center / calc(100% - 10px) 1px no-repeat;
+}
+.page-num::after { transform: scaleX(-1); }
+.page-num span {
+  display: grid; place-items: center; min-width: 46px; height: 30px; padding: 0 10px;
+  border: 3px double var(--gold); border-radius: 50%;
+  font-size: 14px; font-weight: 600; color: var(--ink); background: var(--surface-000);
 }
 
 /* surah title band: name in the middle, its order and ayah count in rosettes */
@@ -113,25 +139,27 @@ body.in-hifz .topbar { display: none; } /* the reading page has its own bar */
 .fab svg { width: 22px; height: 22px; }
 .fab:hover { background: color-mix(in srgb, var(--gold) 28%, var(--gold-soft)); }
 
-/* ── bottom dock: sheet handle, page buttons, player ── */
+/* ── bottom dock: the player ───────────────────────── */
 .dock {
   position: fixed; inset-inline: 0; bottom: 0; z-index: 20;
   background: var(--surface-100); border-top: 1px solid var(--line);
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
-.peek {
-  display: flex; align-items: center; justify-content: center; gap: var(--space-3); width: 100%;
-  height: 30px; border: 0; background: none; color: var(--ink-muted); font: inherit; font-size: 12.5px; font-weight: 500; cursor: pointer;
-}
-.peek__grip, .sheet__grip { width: 36px; height: 4px; border-radius: var(--radius-pill); background: var(--line-strong); flex: none; }
-.peek:hover { color: var(--ink); }
+.sheet__grip { width: 36px; height: 4px; border-radius: var(--radius-pill); background: var(--line-strong); flex: none; }
 
-.pager-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: 0 var(--space-3) var(--space-2); }
-.pg-btn { height: 40px; padding: 0 var(--space-3); gap: var(--space-1); border-radius: var(--radius-pill); }
-.pg-btn svg { width: 20px; height: 20px; }
-.pg-btn:disabled { opacity: .4; cursor: default; }
-.pg-label { font-size: 13.5px; font-weight: 500; }
-.viewer .mushaf-wrap { transition: transform 160ms ease; touch-action: pan-y; }
+/* ── the bars hidden: the page alone ───────────────── */
+.dock, .fab { transition: transform 220ms ease, opacity 220ms ease, visibility 0s; }
+.bars-hidden .vtop { transform: translateY(-100%); visibility: hidden; transition: transform 220ms ease, visibility 0s 220ms; }
+.bars-hidden .dock { transform: translateY(100%); visibility: hidden; transition: transform 220ms ease, visibility 0s 220ms; }
+.bars-hidden .fab { opacity: 0; transform: scale(.9); visibility: hidden; transition: opacity 180ms ease, transform 180ms ease, visibility 0s 180ms; }
+@media (prefers-reduced-motion: reduce) { .vtop, .dock, .fab, .ptrack.is-settling { transition: none !important; } }
+.bars-hint {
+  position: fixed; z-index: 25; left: 50%; bottom: calc(var(--space-6) + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  margin: 0; padding: var(--space-2) var(--space-4); border-radius: var(--radius-pill);
+  background: var(--ink); color: var(--surface-000); font-size: 14px; white-space: nowrap; box-shadow: var(--shadow-raised);
+  pointer-events: none; animation: hint-in 260ms ease both;
+}
+@keyframes hint-in { from { opacity: 0; transform: translate(-50%, 8px); } }
 .gtile {
   position: relative; display: grid; place-items: center;
   border: 1px solid var(--line); border-radius: var(--radius-xs); background: var(--surface-000); color: var(--ink-muted);
@@ -141,12 +169,15 @@ body.in-hifz .topbar { display: none; } /* the reading page has its own bar */
   position: absolute; inset: 7px 5px; opacity: .55;
   background: repeating-linear-gradient(to bottom, var(--line) 0 1.5px, transparent 1.5px 5px);
 }
-.gtile b { position: relative; font-weight: 600; background: var(--surface-000); padding: 0 2px; border-radius: 3px; }
+.gtile b {
+  position: relative; max-width: 100%; padding: 1px 3px; border-radius: 3px; background: var(--surface-000);
+  font-family: var(--font-quran); font-size: 16px; font-weight: 400; line-height: 1.9; text-align: center; text-wrap: balance; overflow-wrap: anywhere;
+}
 .gtile.is-current { border: 2px solid var(--brand); color: var(--brand); }
 .gtile:hover { border-color: var(--brand); }
 
 .viewer .player {
-  position: static; inset: auto; margin: 0 var(--space-3) var(--space-3);
+  position: static; inset: auto; margin: var(--space-3);
   border-radius: var(--radius-lg); box-shadow: none;
 }
 
@@ -181,15 +212,16 @@ body.in-hifz .topbar { display: none; } /* the reading page has its own bar */
 @media (min-width: 1200px) {
   .sheet, .sheet[data-state="full"] {
     inset-inline: auto; left: var(--space-4); top: 76px; bottom: calc(var(--dock-h) + var(--space-3));
+    transition: top 220ms ease, bottom 220ms ease;
     width: 400px; height: auto; border-radius: var(--radius-md); border: 1px solid var(--line); box-shadow: var(--shadow-raised);
   }
   .sheet[data-state="closed"] { transform: none; display: none; }
   .sheet__head { cursor: default; }
   .sheet__head .sheet__grip { display: none; }
-  .panel-open .stage { padding-left: calc(400px + var(--space-6)); }
+  .bars-hidden .sheet { top: var(--space-4); bottom: var(--space-4); }
+  .panel-open .vstage { padding-left: calc(400px + var(--space-6)); }
   .panel-open .detail { margin-left: calc(400px + var(--space-6)); }
   .panel-open .pen-bar { padding-left: calc(400px + var(--space-6)); }
-  .peek { display: none; }
 }
 
 /* ── page grid (back button) ───────────────────────── */
@@ -209,8 +241,8 @@ body.in-hifz .topbar { display: none; } /* the reading page has its own bar */
 .gjuz summary { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); cursor: pointer; font-family: var(--font-display); font-size: 17px; font-weight: 600; }
 .gjuz summary .muted { font-family: var(--font-sans); font-size: 13px; font-weight: 400; }
 .gjuz__n { flex: none; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; border: 1.5px solid var(--gold); color: var(--gold-ink); font-family: var(--font-sans); font-size: 13px; font-weight: 600; }
-.gtiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: var(--space-2); padding: 0 var(--space-4) var(--space-4); }
-.gtile { aspect-ratio: .72; flex-direction: column; gap: 2px; font-size: 14px; padding: 6px 4px; }
+.gtiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: var(--space-2); padding: 0 var(--space-4) var(--space-4); }
+.gtile { aspect-ratio: .72; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 14px; padding: 6px 4px; color: var(--ink); }
 .gtile small { position: relative; font-size: 11px; color: var(--ink-muted); background: var(--surface-000); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gsurahs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-2); }
 .gsurahs button {
@@ -251,10 +283,10 @@ body.in-hifz .topbar { display: none; } /* the reading page has its own bar */
   .vbar { padding: var(--space-1) var(--space-2); }
   .vbtn { width: 40px; height: 40px; }
   .vbar__title strong { font-size: 17px; }
-  .stage { padding-inline: 2px; }
+  .vstage { padding-inline: 2px; }
   .mushaf-frame { margin: 5px; padding: 12px 10px 8px; }
   .page-head { font-size: 13.5px; }
-  .viewer .player { margin: 0 var(--space-2) var(--space-2); }
+  .viewer .player { margin: var(--space-2); }
   .viewer .player__row { padding: var(--space-2) var(--space-3); gap: var(--space-3); }
   .fab span { display: none; }
   .fab { width: 52px; height: 52px; padding: 0; justify-content: center; }
