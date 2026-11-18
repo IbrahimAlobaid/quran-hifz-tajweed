@@ -7,7 +7,7 @@
  */
 const MODE = document.querySelector('meta[name="hifz-mode"]')?.content === "static" ? "static" : "server";
 const WBW_CDN = "https://audio.qurancdn.com";
-const SURAH_SCHEMA = 2;
+const SURAH_SCHEMA = 3;
 const memo = new Map();
 const pad = (n) => String(n).padStart(3, "0");
 
@@ -40,7 +40,8 @@ async function timings(rid, n) {
 export const api = {
   mode: MODE,
   surahs: () => get(MODE === "static" ? "data/static/surahs.json" : "/api/surahs"),
-  // ?v= busts the day-long CDN cache whenever the surah schema changes (v2: page/line per word).
+  // ?v= busts the day-long CDN cache whenever the surah schema changes
+  // (v2: page/line per word; v3: lines from the KFGQPC printing).
   surah: (n) => get(MODE === "static" ? `data/static/surah/${pad(n)}.json?v=${SURAH_SCHEMA}` : `/api/surah/${n}`),
   reciters: () => get(MODE === "static" ? "data/static/reciters.json" : "/api/reciters"),
   rules: () => get(MODE === "static" ? "data/static/tajweed-rules.json" : "/api/tajweed/rules"),

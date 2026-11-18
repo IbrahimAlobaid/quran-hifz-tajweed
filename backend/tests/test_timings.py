@@ -1,4 +1,14 @@
-from app.services.audio_service import sanitize_timings
+from app.services.audio_service import ayah_reciters, ayah_timings, is_per_ayah, sanitize_timings
+
+
+def test_ayah_by_ayah_reciter_gets_one_file_per_ayah():
+    rid = ayah_reciters()[0]["id"]
+    assert is_per_ayah(rid) and not is_per_ayah(7)
+    t = ayah_timings(rid, 2, 286)
+    assert t["per_ayah"] and len(t["verses"]) == 286
+    last = t["verses"][-1]
+    assert (last["n"], last["segs"]) == (286, [])
+    assert last["url"].endswith("/Ayman_Sowaid_64kbps/002286.mp3")
 
 
 def test_sanitize_drops_malformed_and_sorts():

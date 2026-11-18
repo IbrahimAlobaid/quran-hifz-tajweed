@@ -659,7 +659,8 @@ async function boot() {
     bindSegmented(document.querySelector(".side-tabs"), settings.sideTab, setSideTab, "aria-selected");
     setSideTab(settings.sideTab);
 
-    learn = new LearnView({ root: $("view-learn"), clipAudio: $("clip-audio"), reciters });
+    // lesson examples cut words out of a surah recording, so they need word timings
+    learn = new LearnView({ root: $("view-learn"), clipAudio: $("clip-audio"), reciters: reciters.filter((r) => !r.per_ayah) });
     plans = new PlansView({ root: $("view-plan"), surahs });
     mutView = new MutView({ root: $("view-mut"), surahs });
     addEventListener("hashchange", route);

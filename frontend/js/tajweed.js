@@ -58,7 +58,9 @@ export class TajweedPanel extends EventTarget {
             type: "button", class: "chip" + (n ? "" : " chip--empty"), dataset: { r: k },
             "aria-pressed": String(this.focused === k), title: this.cat.rules[k].desc,
             onclick: () => this.toggleFocus(k),
-          }, el("span", { class: "dot" }), this.cat.rules[k].name, el("span", { class: "chip__n" }, ar(n)));
+          }, el("span", { class: "dot" }), this.cat.rules[k].name,
+          // how often the rule occurs on screen, not a length in harakat
+          el("span", { class: "chip__n", title: `عدد مرات وروده: ${ar(n)}`, "aria-label": `ورد ${ar(n)} مرة` }, ar(n)));
         })),
       )));
   }

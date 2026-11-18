@@ -63,6 +63,8 @@ async def tajweed_rules():
 async def timings(rid: int, n: SurahNo):
     await _check_reciter(rid)
     t = await _upstream(audio_service.timings(rid, n))
+    if t.get("per_ayah"):  # streamed ayah by ayah from EveryAyah, not cached
+        return {**t, "audio": None, "cache": "remote"}
     dest = audio_service.audio_file(rid, n)
     return {**t, "audio": f"/api/audio/{rid}/{n}", "cache": audio_service.download_state(dest)}
 
@@ -73,6 +75,8 @@ async def audio(rid: int, n: SurahNo, cache: bool = True):
     On a cache miss, redirect to the CDN and cache it in the background
     (cache=0 streams only — used for short lesson clips)."""
     await _check_reciter(rid)
+    if audio_service.is_per_ayah(rid):
+        raise HTTPException(404, "هذا القارئ بلا ملف للسورة كاملة؛ تُشغَّل آياته واحدة واحدة")
     dest = audio_service.audio_file(rid, n)
     if dest.exists():
         return FileResponse(dest, media_type="audio/mpeg", headers=AUDIO_HEADERS)

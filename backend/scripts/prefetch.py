@@ -37,7 +37,7 @@ async def main() -> None:
     async def one(n: int) -> None:
         async with sem:
             await quran_api.surah(n)
-            if args.reciter:
+            if args.reciter and not audio_service.is_per_ayah(args.reciter):
                 t = await audio_service.timings(args.reciter, n)
                 dest = audio_service.audio_file(args.reciter, n)
                 if not dest.exists():

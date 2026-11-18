@@ -8,6 +8,7 @@ from pathlib import Path
 
 from app.config import get_settings
 from app.services.cache import cache_path, cached_json, client, get_json, write_atomic
+from app.services.quran_api import chapters
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +20,46 @@ STYLE_AR = {
 }
 _downloads: dict[str, asyncio.Task] = {}
 
+# Reciters Quran.com has no recording of. EveryAyah.com has them as one mp3 per ayah, with
+# no word timings, so the player plays each ayah's file and highlights the ayah, not the word.
+EVERYAYAH = "https://everyayah.com/data"
+AYAH_RECITERS = {
+    9001: {"name": "أيمن رشدي سويد", "name_en": "Ayman Sowaid", "folder": "Ayman_Sowaid_64kbps"},
+}
+
+
+def is_per_ayah(rid: int) -> bool:
+    return rid in AYAH_RECITERS
+
+
+def ayah_reciters() -> list[dict]:
+    return [
+        {"id": rid, "name": r["name"], "name_en": r["name_en"], "style": "",
+         "label": f"{r['name']} — دون تتبّع الكلمات", "per_ayah": True}
+        for rid, r in AYAH_RECITERS.items()
+    ]
+
+
+def ayah_timings(rid: int, n: int, ayahs: int) -> dict:
+    """One file per ayah; `to` stays 0 until the browser reads each file's length."""
+    folder = AYAH_RECITERS[rid]["folder"]
+    return {
+        "audio_url": None,
+        "duration": 0,
+        "per_ayah": True,
+        "verses": [
+            {"key": f"{n}:{a}", "n": a, "from": 0, "to": 0, "segs": [],
+             "url": f"{EVERYAYAH}/{folder}/{n:03d}{a:03d}.mp3"}
+            for a in range(1, ayahs + 1)
+        ],
+    }
+
 
 async def reciters() -> list[dict]:
+    return [*await _qdc_reciters(), *ayah_reciters()]
+
+
+async def _qdc_reciters() -> list[dict]:
     async def build():
         d = await get_json(f"{get_settings().qdc_api_base}/audio/reciters", params={"locale": "ar"})
         out, seen = [], set()
@@ -80,6 +119,10 @@ def sanitize_timings(raw: dict) -> dict:
 
 
 async def timings(rid: int, n: int) -> dict:
+    if is_per_ayah(rid):
+        meta = next(c for c in await chapters() if c["id"] == n)
+        return ayah_timings(rid, n, meta["ayahs"])
+
     async def build():
         d = await get_json(
             f"{get_settings().qdc_api_base}/audio/reciters/{rid}/audio_files",

@@ -34,6 +34,11 @@ export class Player extends EventTarget {
     audio.addEventListener("error", () => this._emit("error", { message: "تعذّر تحميل ملف الصوت. تحقّق من الاتصال ثم أعد المحاولة." }));
     audio.addEventListener("waiting", () => this._emit("buffering", { on: true }));
     audio.addEventListener("playing", () => this._emit("buffering", { on: false }));
+    // An ayah-by-ayah reciter's ayah ends where its own file does.
+    audio.addEventListener("durationchange", () => {
+      const v = this.perAyah && this.verse;
+      if (v && this.audio.getAttribute("src") === v.url && Number.isFinite(audio.duration)) v.to = audio.duration * 1000;
+    });
   }
 
   reset() {
@@ -45,17 +50,26 @@ export class Player extends EventTarget {
     this._positioned = false;
   }
 
-  /** Load a reciter/surah. `t` = sanitized timings from the API. */
+  /**
+   * Load a reciter/surah. `t` = sanitized timings from the API.
+   * With `t.per_ayah` each verse has its own file (`url`) and no word segments: the
+   * engine then switches files between ayahs, and an ayah's length is known once its
+   * file loads (until then it ends on the file's 'ended').
+   */
   load(t, src) {
     this.stop();
-    this.verses = new Map(t.verses.map((v) => [v.n, v]));
-    if (this.audio.getAttribute("src") !== src) {
+    this.perAyah = !!t.per_ayah;
+    this.verses = new Map(t.verses.map((v) => [v.n, this.perAyah ? { ...v, to: Infinity } : v]));
+    if (!this.perAyah && this.audio.getAttribute("src") !== src) {
       this.audio.src = src;
       this.audio.load();
     }
-    this.audio.playbackRate = this.opts.rate;
+    this._rate(this.opts.rate);
     this.reset();
   }
+
+  // a new src resets playbackRate to the default rate, so set both
+  _rate(r) { this.audio.defaultPlaybackRate = r; this.audio.playbackRate = r; }
 
   setRange(from, to) {
     this.range = { from, to };
@@ -65,7 +79,7 @@ export class Player extends EventTarget {
 
   setOptions(patch) {
     Object.assign(this.opts, patch);
-    if ("rate" in patch) this.audio.playbackRate = patch.rate;
+    if ("rate" in patch) this._rate(patch.rate);
   }
 
   get verse() { return this.verses.get(this.cur); }
@@ -75,7 +89,8 @@ export class Player extends EventTarget {
     if (!v) return;
     if (this.inGap) { this._endGap(); return; }
     const t = this.audio.currentTime * 1000;
-    if (!this._positioned || t < v.from - 200 || t >= v.to - END_SLACK_MS) this._seek(v.from);
+    const elsewhere = this.perAyah && this.audio.getAttribute("src") !== v.url;
+    if (elsewhere || !this._positioned || t < v.from - 200 || t >= v.to - END_SLACK_MS) this._seek(v.from);
     this.playing = true;
     this._emit("state");
     try { await this.audio.play(); }
@@ -125,13 +140,15 @@ export class Player extends EventTarget {
   /** Seek within the current ayah by fraction 0..1. */
   seekFraction(f) {
     const v = this.verse;
-    if (!v) return;
+    if (!v || !Number.isFinite(v.to)) return; // an ayah file not loaded yet has no length
     this._seek(v.from + (v.to - v.from) * Math.min(Math.max(f, 0), 0.995));
     this._tick(true);
   }
 
   // ── internals ──────────────────────────────────────────
   _seek(ms) {
+    const url = this.perAyah && this.verse?.url;
+    if (url && this.audio.getAttribute("src") !== url) this.audio.src = url;
     this.audio.currentTime = ms / 1000;
     this._positioned = true;
   }
