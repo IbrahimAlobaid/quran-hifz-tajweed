@@ -1,0 +1,82 @@
+/* Lawh design system tokens (tokens.json → CSS). Three themes: Day (default),
+   Night, Mushaf. Until the reader picks one, Night follows the system setting. */
+
+:root {
+  /* colour — Day */
+  --surface-000: #fffdf8; --surface-100: #f7f3ea; --surface-200: #eee7d8;
+  --line: #e0d6c2; --line-strong: #877c68;
+  --ink: #1c2620; --ink-muted: #55605a; --ink-faint: #636c66;
+  --brand: #1f4d3a; --brand-strong: #163a2b; --on-brand: #f7f3ea; --brand-soft: #dbe7de; --on-brand-soft: #1a4433;
+  --gold: #b88a3b; --gold-ink: #80601f; --gold-soft: #f2e6c9;
+  --focus-ring: #1f4d3a;
+  --state-new: #c9d3cc; --state-learning: #9a6411; --state-solid: #1f4d3a; --state-fading: #a8452c;
+  --danger: #9e3b24; --danger-soft: #f6e0d8; --info: #2d5d7c;
+  --tj-madd-6: #a3201b; --tj-madd-4: #d0402a; --tj-madd-2-6: #c96a12; --tj-madd-2: #9a7428;
+  --tj-ghunnah: #24803a; --tj-tafkheem: #1d4f91; --tj-qalqalah: #167fae; --tj-silent: #8b8b86;
+  --shadow-raised: 0 1px 2px rgba(28, 38, 32, .06), 0 2px 8px rgba(28, 38, 32, .05);
+  --shadow-sheet: 0 -8px 32px rgba(28, 38, 32, .14);
+  color-scheme: light;
+
+  /* type */
+  --font-display: "Reem Kufi", "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans Arabic", "IBM Plex Sans", system-ui, sans-serif;
+  /* The Quran text comes from Quran.com encoded for the King Fahd Complex
+     Uthmani Hafs font, which also gives the Madinah page its line breaks. */
+  --font-quran: "UthmanicHafs", "Amiri Quran", "Amiri", serif;
+  --font-naskh: "Noto Naskh Arabic", "Amiri", serif;
+
+  /* space, shape, size */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 72px;
+  --radius-xs: 4px; --radius-sm: 8px; --radius-md: 14px; --radius-lg: 22px; --radius-pill: 999px;
+  --control-sm: 36px; --control-md: 48px; --control-lg: 56px;
+  --reading-measure: 640px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --surface-000: #1b231f; --surface-100: #131a16; --surface-200: #0e1411;
+    --line: #29342e; --line-strong: #6f7c74;
+    --ink: #ece6d8; --ink-muted: #a6b0a9; --ink-faint: #87918b;
+    --brand: #8cc4a6; --brand-strong: #a9d6bd; --on-brand: #0f1d16; --brand-soft: #1d3329; --on-brand-soft: #bfe3cf;
+    --gold: #d6ae63; --gold-ink: #e0bd78; --gold-soft: #33291a;
+    --focus-ring: #e0bd78;
+    --state-new: #36433c; --state-learning: #c99442; --state-solid: #8cc4a6; --state-fading: #e58a6f;
+    --danger: #ef9c84; --danger-soft: #3a201a; --info: #8dbfdc;
+    --tj-madd-6: #ff8a80; --tj-madd-4: #ff9e7a; --tj-madd-2-6: #ffb66b; --tj-madd-2: #d9b56a;
+    --tj-ghunnah: #7fd492; --tj-tafkheem: #8fb6ff; --tj-qalqalah: #6fd0f5; --tj-silent: #80857f;
+    --shadow-raised: 0 1px 2px rgba(0, 0, 0, .4);
+    --shadow-sheet: 0 -8px 32px rgba(0, 0, 0, .55);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --surface-000: #1b231f; --surface-100: #131a16; --surface-200: #0e1411;
+  --line: #29342e; --line-strong: #6f7c74;
+  --ink: #ece6d8; --ink-muted: #a6b0a9; --ink-faint: #87918b;
+  --brand: #8cc4a6; --brand-strong: #a9d6bd; --on-brand: #0f1d16; --brand-soft: #1d3329; --on-brand-soft: #bfe3cf;
+  --gold: #d6ae63; --gold-ink: #e0bd78; --gold-soft: #33291a;
+  --focus-ring: #e0bd78;
+  --state-new: #36433c; --state-learning: #c99442; --state-solid: #8cc4a6; --state-fading: #e58a6f;
+  --danger: #ef9c84; --danger-soft: #3a201a; --info: #8dbfdc;
+  --tj-madd-6: #ff8a80; --tj-madd-4: #ff9e7a; --tj-madd-2-6: #ffb66b; --tj-madd-2: #d9b56a;
+  --tj-ghunnah: #7fd492; --tj-tafkheem: #8fb6ff; --tj-qalqalah: #6fd0f5; --tj-silent: #80857f;
+  --shadow-raised: 0 1px 2px rgba(0, 0, 0, .4);
+  --shadow-sheet: 0 -8px 32px rgba(0, 0, 0, .55);
+  color-scheme: dark;
+}
+:root[data-theme="mushaf"] {
+  --surface-000: #faf1dc; --surface-100: #f3e6c8; --surface-200: #eadab6;
+  --line: #dbc79c; --line-strong: #8a7650;
+  --ink: #2e2414; --ink-muted: #5e4d33; --ink-faint: #6c5a3c;
+  --brand: #2c5640; --brand-strong: #1f4130; --on-brand: #f7efdc; --brand-soft: #dde2c6; --on-brand-soft: #24492f;
+  --gold: #a97c2e; --gold-ink: #6f4f17; --gold-soft: #ecd9a8;
+  --focus-ring: #1f4130;
+  --state-new: #d3c59f; --state-learning: #8f5d10; --state-solid: #2c5640; --state-fading: #9c3b22;
+  --danger: #8f3420; --danger-soft: #f0d3c2; --info: #2a5570;
+  --tj-madd-6: #9a1d18; --tj-madd-4: #c23a24; --tj-madd-2-6: #b85f0e; --tj-madd-2: #8a6620;
+  --tj-ghunnah: #1f7333; --tj-tafkheem: #1b4783; --tj-qalqalah: #14709a; --tj-silent: #8e826c;
+  --shadow-raised: 0 1px 2px rgba(46, 36, 20, .08), 0 2px 8px rgba(46, 36, 20, .06);
+  --shadow-sheet: 0 -8px 32px rgba(46, 36, 20, .16);
+  color-scheme: light;
+}

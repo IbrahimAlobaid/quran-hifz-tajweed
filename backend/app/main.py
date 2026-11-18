@@ -23,7 +23,7 @@ async def lifespan(_app: FastAPI):
     await close_client()
 
 
-app = FastAPI(title="مُعين الحفظ — Quran Hifz Companion", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="لوح — Quran Hifz Companion", version="1.0.0", lifespan=lifespan)
 app.add_middleware(GZipMiddleware, minimum_size=2048)
 app.include_router(api.router)
 # The UI is served by the same process — open http://127.0.0.1:8000

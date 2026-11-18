@@ -6,6 +6,7 @@
 import { HADITH, MANAZIL, METHODS, QASIM_REVIEW, RULES, SCIENCE, SESSION, SOURCES, VIDEOS } from "./plans-content.js";
 import { AMOUNTS, amountOf, calendarDays, DEFAULT_PLAN, juzProgress, portions, today } from "./plans-data.js";
 import { ar, el } from "./util.js";
+import { icon } from "./icons.js";
 import { videoCard } from "./video.js";
 
 const KEY = "hifz.plan.v1";
@@ -246,16 +247,29 @@ export class PlansView {
           el("div", { class: "progress__bar" }, el("div", { style: `width:${pct}%` })),
           el("span", {}, `حفظت ${ar(st.done)} من ${count(total, "portion")} (${ar(pct)}٪)`)),
         left ? el("p", { class: "muted" }, `بقي نحو ${duration(days)} بإذن الله. الموعد المتوقع للختم: ${finishDate(days)}.`) : null,
-        el("div", { class: "juzmap", role: "img", "aria-label": `خريطة الحفظ: ${juz.filter((x) => x >= 1).length} جزءًا محفوظًا كاملًا` },
-          juz.map((f, i) => el("span", { class: "juzmap__c" + (f >= 1 ? " is-full" : ""), style: `--f:${f.toFixed(3)}`, title: `الجزء ${ar(i + 1)}: ${ar(Math.round(f * 100))}٪` },
-            el("span", {}, ar(i + 1)))))),
+        this.memoryMap(juz)),
       el("p", { class: "today__foot" }, undo, reset));
+  }
+
+  /** The 30 juz as a 10 × 3 grid: memorized, in progress, not started — each with its number and a legend. */
+  memoryMap(juz) {
+    const STATES = [["solid", "محفوظ"], ["learning", "قيد الحفظ"], ["new", "لم يبدأ"]];
+    const state = (f) => (f >= 1 ? "solid" : f > 0 ? "learning" : "new");
+    const counts = Object.fromEntries(STATES.map(([k]) => [k, juz.filter((f) => state(f) === k).length]));
+    return el("div", { class: "juzmap" },
+      el("div", { class: "juzmap__grid", role: "list", "aria-label": "خريطة الأجزاء" },
+        juz.map((f, i) => el("span", {
+          class: `juzmap__c is-${state(f)}`, role: "listitem",
+          title: `الجزء ${ar(i + 1)}: ${ar(Math.round(f * 100))}٪`, "aria-label": `الجزء ${ar(i + 1)}، ${STATES.find(([k]) => k === state(f))[1]}`,
+        }, ar(i + 1)))),
+      el("p", { class: "juzmap__legend" }, STATES.map(([k, name]) =>
+        el("span", {}, el("i", { class: `is-${k}` }), `${name} (${ar(counts[k])})`))));
   }
 
   track(kind, label, main, detail, links) {
     return el("li", { class: `track track--${kind}` },
-      el("span", { class: "track__label" }, label),
-      el("div", { class: "track__body" }, el("strong", {}, main), el("span", { class: "muted" }, detail)),
+      el("span", { class: "track__icon" }, icon(kind === "new" ? "wird" : "review")),
+      el("div", { class: "track__body" }, el("span", { class: "track__label" }, label), el("strong", {}, main), el("span", { class: "muted" }, detail)),
       links.length ? el("div", { class: "track__links" }, links) : null);
   }
 

@@ -1,8 +1,6 @@
 /* «خطط الحفظ» page. Tokens from app.css; layout shell (.learn__wrap, .learn__bar, .learn-hero) from learn.css. */
 
-.plans { --near: #2f7d4f; --far: #8a6a2b; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .plans { --near: #6fcf97; --far: #d9b56a; } }
-:root[data-theme="dark"] .plans { --near: #6fcf97; --far: #d9b56a; }
+.plans { --near: var(--brand); --far: var(--gold-ink); }
 
 .plans a.btn { text-decoration: none; color: inherit; }
 .plans a.btn--primary { color: var(--lapis-ink); }
@@ -37,21 +35,19 @@
 .today__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; margin-bottom: 14px; }
 .today__head h2 { margin: 0; }
 .today__head p { margin: 0; font-size: 13.5px; }
-.tracks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.tracks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
 .track {
-  --rail: var(--lapis);
-  display: grid; grid-template-columns: 112px minmax(0, 1fr) auto; gap: 6px 16px; align-items: center;
-  padding: 14px 16px; border-radius: var(--r-md); background: var(--paper);
-  border: 1px solid var(--line); border-inline-start: 5px solid var(--rail);
+  display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: var(--space-1) var(--space-3); align-items: center;
+  padding: var(--space-3) var(--space-4); border-radius: var(--radius-sm); background: var(--surface-100);
 }
-.track--near { --rail: var(--near); }
-.track--far { --rail: var(--far); }
-.track__label { font-size: 13.5px; font-weight: 700; color: var(--rail); }
+.track__icon { color: var(--brand); align-self: start; padding-top: 2px; }
+.track--far .track__icon { color: var(--gold-ink); }
+.track__label { display: block; font-size: 12.5px; line-height: 19px; font-weight: 500; color: var(--ink-muted); }
 .track__body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.track__body strong { font-size: 17px; font-weight: 600; line-height: 1.6; }
-.track__body .muted { font-size: 13.5px; }
-.track__links { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
-.track--new .track__body strong { font-size: 19px; }
+.track__body strong { font-size: 16px; line-height: 24px; font-weight: 500; }
+.track__body .muted { font-size: 14px; line-height: 23px; }
+.track__links { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: flex-end; }
+.track--new .track__body strong { font-size: 18px; line-height: 28px; font-weight: 600; }
 
 .today__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 18px 0 4px; }
 .today__actions .btn { height: 40px; padding: 0 16px; font-weight: 600; }
@@ -60,20 +56,18 @@
 .today__progress > p { margin: 0 0 12px; font-size: 13.5px; }
 .today__foot { display: flex; gap: 18px; margin: 14px 0 0; }
 
-/* the mushaf in 30 juz, filled by what is memorized */
-.juzmap { display: grid; grid-template-columns: repeat(30, minmax(0, 1fr)); gap: 3px; }
-.juzmap__c {
-  position: relative; height: 38px; border-radius: 3px; overflow: hidden;
-  background: color-mix(in srgb, var(--line) 70%, transparent);
-  display: grid; place-items: end center;
-}
-.juzmap__c::before {
-  content: ""; position: absolute; inset: auto 0 0 0; height: calc(var(--f) * 100%);
-  background: color-mix(in srgb, var(--lapis) 55%, transparent);
-}
-.juzmap__c.is-full::before { background: var(--lapis); }
-.juzmap__c span { position: relative; font-size: 10px; line-height: 1; padding-bottom: 3px; color: var(--ink-2); }
-.juzmap__c.is-full span { color: var(--lapis-ink); }
+/* MemoryMap: the 30 juz, 10 × 3, juz 1 at the top right; state by colour, number and legend */
+.juzmap__grid { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 6px; max-width: 520px; }
+.juzmap__c { aspect-ratio: 1; border-radius: var(--radius-xs); display: grid; place-items: center; font-size: 12.5px; font-weight: 600; }
+.juzmap__c.is-new { background: var(--state-new); color: var(--ink); }
+.juzmap__c.is-learning { background: var(--state-learning); color: var(--surface-000); }
+.juzmap__c.is-solid { background: var(--state-solid); color: var(--on-brand); }
+.juzmap__legend { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin: var(--space-3) 0 0; font-size: 14px; color: var(--ink-muted); }
+.juzmap__legend span { display: inline-flex; align-items: center; gap: 6px; }
+.juzmap__legend i { width: 14px; height: 14px; border-radius: var(--radius-xs); }
+.juzmap__legend i.is-new { background: var(--state-new); }
+.juzmap__legend i.is-learning { background: var(--state-learning); }
+.juzmap__legend i.is-solid { background: var(--state-solid); }
 
 /* ── ready plans ────────────────────────────────────── */
 .table-wrap { overflow-x: auto; }
@@ -147,10 +141,8 @@
 
 @media (max-width: 760px) {
   .mainnav a { white-space: nowrap; padding: 7px 6px; font-size: 14px; }
-  .track { grid-template-columns: 1fr; padding: 12px 14px; }
-  .track__links { justify-content: flex-start; }
-  .juzmap { grid-template-columns: repeat(15, minmax(0, 1fr)); }
-  .juzmap__c { height: 30px; }
+  .track { grid-template-columns: 24px minmax(0, 1fr); padding: 12px 14px; }
+  .track__links { grid-column: 2; justify-content: flex-start; }
   .methods, .science { grid-template-columns: 1fr; }
   .rules { grid-template-columns: 1fr; }
   .rules dt { border-bottom: 0; padding-bottom: 0; }

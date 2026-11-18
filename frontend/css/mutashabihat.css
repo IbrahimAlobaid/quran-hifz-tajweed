@@ -1,13 +1,9 @@
 /* «المتشابهات»: side panel, ayah marks and the #/mut page. Tokens from app.css. */
 
-:root { --mut-diff: #b4232f; --mut-diff-bg: #fbe3e5; --mut-near: #9a5b00; --mut-near-bg: #fbedcf; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --mut-diff: #ff8f98; --mut-diff-bg: #4a1f26; --mut-near: #f2c26b; --mut-near-bg: #43351a; }
-}
-:root[data-theme="dark"] { --mut-diff: #ff8f98; --mut-diff-bg: #4a1f26; --mut-near: #f2c26b; --mut-near-bg: #43351a; }
+:root { --mut-diff: var(--danger); --mut-diff-bg: var(--danger-soft); --mut-near: var(--state-learning); --mut-near-bg: var(--gold-soft); }
 
-/* an ayah number with similar places elsewhere */
-.ayah-end.has-mut { text-decoration: underline dotted var(--mut-near); text-decoration-thickness: 2px; text-underline-offset: .32em; }
+/* an ayah number with similar places elsewhere: its rosette is filled */
+.ayah-end.has-mut::before, .ayah-end.has-mut::after { background: var(--gold-soft); }
 
 /* side tabs: three now */
 .side-tabs button { padding: 7px 6px; white-space: nowrap; }

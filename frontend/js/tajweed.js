@@ -7,6 +7,12 @@ const isDark = () => {
   return t ? t === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
 };
 
+/** «مصحف التجويد» colours → the design system's tajweed tokens (Day, Night, Mushaf). */
+const TJ_TOKEN = {
+  "#8b0000": "--tj-madd-6", "#d10a1e": "--tj-madd-4", "#f08a00": "--tj-madd-2-6", "#b07a3c": "--tj-madd-2",
+  "#169200": "--tj-ghunnah", "#1d4ed8": "--tj-qalqalah", "#9a9a9a": "--tj-silent",
+};
+
 export class TajweedPanel extends EventTarget {
   constructor({ catalog, legend, wordBox, ayahBox, ayahBadge, mushaf }) {
     super();
@@ -22,7 +28,9 @@ export class TajweedPanel extends EventTarget {
 
   color(rule) {
     const c = this.cat.rules[rule]?.[this.palette];
-    return c ? c[isDark() ? 1 : 0] : "currentColor";
+    if (!c) return "currentColor";
+    if (this.palette === "maarifa" && TJ_TOKEN[c[0]]) return `var(${TJ_TOKEN[c[0]]})`; // follows the theme
+    return c[isDark() ? 1 : 0];
   }
 
   /** Write one CSS custom property per rule onto the given roots. */

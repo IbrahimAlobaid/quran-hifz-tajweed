@@ -1,5 +1,5 @@
-/* مُعين الحفظ — lapis ink on cool paper. The only chrome accent is lapis;
-   all other colour in the text belongs to the tajweed rules. */
+/* لوح (Lawh) — the Lawh design system: tokens in tokens.css (Day, Night,
+   Mushaf). Colour on Quran text means a tajweed rule or a state only. */
 
 @font-face {
   font-family: "UthmanicHafs";
@@ -7,40 +7,22 @@
   font-display: block;
 }
 
+/* Older names used across the stylesheets, mapped onto the system's tokens. */
 :root {
-  --paper: #eef1ee;
-  --surface: #fbfcfb;
-  --ink: #1b2430;
-  --ink-2: #4f5c69;
-  --line: #d6dcdf;
-  --lapis: #24408e;
-  --lapis-ink: #ffffff;
-  --lapis-tint: #dfe6f7;
-  --hl: #cfdaf6;
-  --hl-ring: #24408e;
-  --danger: #a32020;
-
-  --font-ui: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
-  --font-q: "UthmanicHafs", "Amiri Quran", "Scheherazade New", serif;
+  --paper: var(--surface-100);
+  --surface: var(--surface-000);
+  --ink-2: var(--ink-muted);
+  --lapis: var(--brand);
+  --lapis-ink: var(--on-brand);
+  --lapis-tint: var(--brand-soft);
+  --hl: var(--gold-soft);
+  --hl-ring: var(--gold);
+  --font-ui: var(--font-sans);
+  --font-q: var(--font-quran);
   --q-size: 34px;
-
-  --r-sm: 6px;
-  --r-md: 10px;
-  --player-h: 88px;
-  color-scheme: light;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper: #131922; --surface: #1a212c; --ink: #e4e8ee; --ink-2: #9aa6b4;
-    --line: #2b3542; --lapis: #8fa8f0; --lapis-ink: #0f1626; --lapis-tint: #243150;
-    --hl: #2c3d66; --hl-ring: #8fa8f0; --danger: #ff8a8a; color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --paper: #131922; --surface: #1a212c; --ink: #e4e8ee; --ink-2: #9aa6b4;
-  --line: #2b3542; --lapis: #8fa8f0; --lapis-ink: #0f1626; --lapis-tint: #243150;
-  --hl: #2c3d66; --hl-ring: #8fa8f0; --danger: #ff8a8a; color-scheme: dark;
+  --r-sm: var(--radius-sm);
+  --r-md: var(--radius-md);
+  --player-h: 92px;
 }
 
 *, *::before, *::after { box-sizing: border-box; }

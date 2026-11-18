@@ -348,16 +348,27 @@ const curFont = () => parseFloat(getComputedStyle(document.documentElement).getP
 $("font-inc").addEventListener("click", () => setFont(curFont() + 3));
 $("font-dec").addEventListener("click", () => setFont(curFont() - 3));
 
+// Three themes from the design system: نهاري (Day), مصحف (warm paper), ليلي (Night).
+const THEMES = [["light", "نهاري"], ["mushaf", "مصحف"], ["dark", "ليلي"]];
+const currentTheme = () => document.documentElement.dataset.theme
+  || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+function showTheme() {
+  const t = currentTheme();
+  const name = THEMES.find(([k]) => k === t)?.[1] || "";
+  $("theme-name").textContent = name;
+  $("theme-btn").setAttribute("aria-label", `المظهر: ${name}. اضغط للتبديل`);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", getComputedStyle(document.documentElement).getPropertyValue("--surface-100").trim());
+}
+showTheme();
 $("theme-btn").addEventListener("click", () => {
-  const dark = document.documentElement.dataset.theme
-    ? document.documentElement.dataset.theme === "dark"
-    : matchMedia("(prefers-color-scheme: dark)").matches;
-  const theme = dark ? "light" : "dark";
+  const i = THEMES.findIndex(([k]) => k === currentTheme());
+  const theme = THEMES[(i + 1) % THEMES.length][0];
   document.documentElement.dataset.theme = theme;
   save({ theme });
+  showTheme();
   panel.applyColors();
 });
-matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => panel?.applyColors());
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { panel?.applyColors(); showTheme(); });
 
 document.addEventListener("keydown", (e) => {
   if (document.body.classList.contains("in-learn")) return; // learn and plans pages
