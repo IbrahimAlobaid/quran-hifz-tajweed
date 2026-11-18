@@ -387,6 +387,8 @@ python -m pytest -q
 
 ## المصادر والتراخيص
 
+كود المشروع مرخّص بـ **[MIT](LICENSE)**. المحتوى المأخوذ من مصادر أخرى يبقى على تراخيصه في الجدول التالي، وهي مفصّلة أيضًا في آخر ملف `LICENSE`.
+
 | المصدر | الاستخدام | الترخيص |
 |---|---|---|
 | [Quran.com API v4](https://api-docs.quran.com/) | النص العثماني، وترميز التجويد، وصوت الكلمات | وفق [شروط Quran Foundation](https://quran.foundation/) |
@@ -448,3 +450,5 @@ python -m pytest -q
 cd backend && pip install -r requirements.txt && python -m uvicorn app.main:app --port 8000
 ```
 Then open http://127.0.0.1:8000. Tests: `python -m pytest -q`.
+
+**License:** code under [MIT](LICENSE); third-party lessons, texts, font and Quran.com data keep their own terms (listed in `LICENSE`).
